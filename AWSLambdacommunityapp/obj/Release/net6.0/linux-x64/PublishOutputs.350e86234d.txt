@@ -1,0 +1,11 @@
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\AWSLambdacommunityapp.deps.json
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\AWSLambdacommunityapp.runtimeconfig.json
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\AWSLambdacommunityapp.pdb
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\Amazon.Lambda.APIGatewayEvents.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\Amazon.Lambda.Core.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\Amazon.Lambda.Serialization.SystemTextJson.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\AWSSDK.Core.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\AWSSDK.DynamoDBv2.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\AWSSDK.S3.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\Newtonsoft.Json.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\publish\AWSLambdacommunityapp.dll
