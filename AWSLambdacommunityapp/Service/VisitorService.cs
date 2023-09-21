@@ -29,6 +29,24 @@ namespace AWSLambdacommunityapp.Service
         {
             string httpMethod = request.RequestContext.Http.Method.ToUpper();
 
+            if (httpMethod == "OPTIONS")
+            {
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 200,
+                    Headers = new Dictionary<string, string>
+                {
+                    { "Access-Control-Allow-Origin", "http://localhost:3000" },
+                    { "Access-Control-Allow-Headers", "Content-Type" },
+                    { "Access-Control-Allow-Methods", "OPTIONS,POST,GET" },
+                    { "Access-Control-Allow-Credentials", "true" },
+                },
+                };
+            }
+
+
+
+
             if (httpMethod == "GET" && request.Body == null && request.PathParameters == null)
             {
                 return await HandleGetListRequest(request);

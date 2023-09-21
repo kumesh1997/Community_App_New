@@ -17,7 +17,9 @@ public class Function
     // Reference for Visitor Service
     private readonly VisitorService visitorService;
     // Reference for Amenities Service
-    //private readonly AmenitiesService amenitiesService;
+    private readonly AmenitiesService amenitiesService;
+    // Reference for User Management Service
+    private readonly UserManagementService userManagementService;
 
     public Function()
     {
@@ -28,7 +30,10 @@ public class Function
         visitorService = new VisitorService();
 
         // New Amenities Service Instance
-       // amenitiesService = new AmenitiesService();
+        amenitiesService = new AmenitiesService();
+
+        // New User Management Service Instance
+        userManagementService = new UserManagementService();
     }
 
    public async Task<APIGatewayHttpApiV2ProxyResponse> HelpDeskHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
@@ -41,10 +46,15 @@ public class Function
         return await visitorService.VisitorFunctionHandler(request, context);
     }
 
-
-   /* public async Task<APIGatewayHttpApiV2ProxyResponse> AmenitiesHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    public async Task<APIGatewayHttpApiV2ProxyResponse> AmenitiesHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
     {
         return await amenitiesService.AmenitiesFunctionHandler(request, context);
-    }*/
+    }
+
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> UserHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await userManagementService.VisitorFunctionHandler(request, context);
+    }
 
 }
