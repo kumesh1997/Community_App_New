@@ -11,18 +11,18 @@ using System.Threading.Tasks;
 
 namespace AWSLambdacommunityapp.Service
 {
-    public class UserManagementService
+    public class ModuleService
     {
         private readonly DynamoDBContext _dynamoDbContext;
 
-        public UserManagementService()
+        public ModuleService()
         {
             // Instance of ConnectToBynamoDB 
             DynamoDB connectToDynamoDB = new DynamoDB();
             _dynamoDbContext = connectToDynamoDB.DBAccessFunction();
         }
 
-        public async Task<APIGatewayHttpApiV2ProxyResponse> VisitorFunctionHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+        public async Task<APIGatewayHttpApiV2ProxyResponse> ModuleFunctionHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
             string httpMethod = request.RequestContext.Http.Method.ToUpper();
 
@@ -44,47 +44,45 @@ namespace AWSLambdacommunityapp.Service
 
             if (httpMethod == "POST" && request.Body != null && request.PathParameters == null)
             {
-                return await HandleUserRegistrationRequest(request);
-            }else if (httpMethod == "GET" && request.Body == null && request.PathParameters != null)
+               return await HandleAddRequest(request);
+            }
+            else if (httpMethod == "GET" && request.Body == null && request.PathParameters == null)
             {
-                return await HandleGetUserDetailsRequest(request);
+               return await HandleGetRequest(request);
             }
             // Handle unsupported or unrecognized HTTP methods
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
         }
 
-        // Handle User Register
-        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUserRegistrationRequest(
-           APIGatewayHttpApiV2ProxyRequest request)
+
+        // Add Modules
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleAddRequest(
+          APIGatewayHttpApiV2ProxyRequest request)
         {
-            var user = JsonSerializer.Deserialize<User>(request.Body);
+            var module = JsonSerializer.Deserialize<Module>(request.Body);
             try
             {
-                user.Email_Verified = true;
-                user.Is_Super_Admin = false;
-                await _dynamoDbContext.SaveAsync(user);
+                module.Module_Id = GenerateCondoId();
+                await _dynamoDbContext.SaveAsync(module);
                 return OkResponse();
             }
             catch (Exception ex)
             {
-                return BadResponse("User was not registered !!! "+ ex.Message);
+                return BadResponse("Module was not Add !!! " + ex.Message);
             }
-            
+
         }
 
-        // Get User Details
-        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetUserDetailsRequest(APIGatewayHttpApiV2ProxyRequest request)
+        // Get Modules
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetRequest(APIGatewayHttpApiV2ProxyRequest request)
         {
             try
             {
-                // get the parameter value
-                request.PathParameters.TryGetValue("Id", out var Id);
-                // Get Users
-                var users = await _dynamoDbContext.ScanAsync<User>(default).GetRemainingAsync();
-                var Selected_User = users.Where(v => v.UserId.Equals(Id));
+                // Get Modules
+                var moduleList = await _dynamoDbContext.ScanAsync<Module>(default).GetRemainingAsync();
                 return new APIGatewayHttpApiV2ProxyResponse
                 {
-                    Body = JsonSerializer.Serialize(Selected_User),
+                    Body = JsonSerializer.Serialize(moduleList),
                     StatusCode = 200
                 };
             }
@@ -94,6 +92,21 @@ namespace AWSLambdacommunityapp.Service
             }
         }
 
+        private int nextId = 1;
+
+        public string GenerateCondoId()
+        {
+            // Format the integer part as a three-digit number with leading zeros
+            string formattedId = nextId.ToString("D3");
+
+            // Combine "CONDO" with the formatted integer
+            string condoId = "MOD" + formattedId;
+
+            // Increment the nextId for the next ID
+            nextId++;
+
+            return condoId;
+        }
 
         // OK Response
         private static APIGatewayHttpApiV2ProxyResponse OkResponse() =>
@@ -111,6 +124,5 @@ namespace AWSLambdacommunityapp.Service
                 StatusCode = 404
             };
         }
-
     }
 }
