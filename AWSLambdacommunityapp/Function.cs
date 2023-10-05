@@ -26,6 +26,8 @@ public class Function
     private readonly ModuleService moduleService;
     // Reference for Admin Service
     private readonly AdminSevice adminSevice;
+    // Reference for MQTT Service
+    private readonly MQTTService mqttService;
 
     public Function()
     {
@@ -49,6 +51,9 @@ public class Function
 
         // New Admin Service Instance
         adminSevice = new AdminSevice();
+
+        // New MQTT Service Instance
+        mqttService = new MQTTService();
     }
 
    public async Task<APIGatewayHttpApiV2ProxyResponse> HelpDeskHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
@@ -85,5 +90,10 @@ public class Function
     public async Task<APIGatewayHttpApiV2ProxyResponse> AdminHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
     {
         return await adminSevice.AdminFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> MQQTHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await mqttService.MQTTFunctionHandler(request, context);
     }
 }
