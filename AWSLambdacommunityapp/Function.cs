@@ -20,6 +20,12 @@ public class Function
     private readonly AmenitiesService amenitiesService;
     // Reference for User Management Service
     private readonly UserManagementService userManagementService;
+    // Reference for Condominium Service
+    private readonly CondominiumService condominiumService;
+    // Reference for Module Service
+    private readonly ModuleService moduleService;
+    // Reference for Admin Service
+    private readonly AdminSevice adminSevice;
 
     public Function()
     {
@@ -34,6 +40,15 @@ public class Function
 
         // New User Management Service Instance
         userManagementService = new UserManagementService();
+
+        // New Condominium Service Instance
+        condominiumService = new CondominiumService();
+
+        // New Module Service Instance
+        moduleService = new ModuleService();
+
+        // New Admin Service Instance
+        adminSevice = new AdminSevice();
     }
 
    public async Task<APIGatewayHttpApiV2ProxyResponse> HelpDeskHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
@@ -57,4 +72,18 @@ public class Function
         return await userManagementService.VisitorFunctionHandler(request, context);
     }
 
+    public async Task<APIGatewayHttpApiV2ProxyResponse> CondoHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await condominiumService.CondominiumFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> ModuleHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await moduleService.ModuleFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> AdminHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await adminSevice.AdminFunctionHandler(request, context);
+    }
 }

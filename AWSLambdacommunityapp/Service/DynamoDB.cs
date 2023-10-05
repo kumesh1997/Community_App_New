@@ -14,5 +14,10 @@ namespace AWSLambdacommunityapp.Service
         {
             return new DynamoDBContext(new AmazonDynamoDBClient());
         }
+
+        public AmazonDynamoDBClient AmazonDynamoDBClient()
+        {
+            return new AmazonDynamoDBClient();
+        }
     }
 }
