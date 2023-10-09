@@ -1,13 +1,19 @@
-﻿using Amazon.DynamoDBv2;
+﻿using Amazon;
+using Amazon.CognitoIdentityProvider;
+using Amazon.CognitoIdentityProvider.Model;
+using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.Extensions.CognitoAuthentication;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
+using Amazon.Runtime;
 using AWSLambdacommunityapp.Dto;
 using AWSLambdacommunityapp.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -19,6 +25,13 @@ namespace AWSLambdacommunityapp.Service
         private readonly DynamoDBContext _dynamoDbContext;
         private readonly AmazonDynamoDBClient _amazonDynamoDBClient;
 
+        private readonly IAmazonCognitoIdentityProvider _cognitoClient;
+        private readonly string _userPoolId = "us-east-1_dRHFkZCMr";
+        private readonly string _clientId = "7drftsbsv2tm316d72o6ek6422";
+        private readonly string _clientSecret = "1q807qber9cpm1blu782jndeo6fg7mck6ncrpdbblq9c31bib6jk";
+        private readonly RegionEndpoint _region = RegionEndpoint.USEast1;
+
+
         public UserManagementService()
         {
             // Instance of ConnectToBynamoDB 
@@ -26,6 +39,9 @@ namespace AWSLambdacommunityapp.Service
             _dynamoDbContext = connectToDynamoDB.DBAccessFunction();
 
             _amazonDynamoDBClient = connectToDynamoDB.AmazonDynamoDBClient();
+
+            var region = RegionEndpoint.USEast1; // e.g., RegionEndpoint.USWest2
+            _cognitoClient = new AmazonCognitoIdentityProviderClient(region);
         }
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> VisitorFunctionHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
@@ -85,7 +101,33 @@ namespace AWSLambdacommunityapp.Service
             var document = new Document();
             try
             {
+                var provider = new AmazonCognitoIdentityProviderClient(
+                new BasicAWSCredentials(_clientId, _clientSecret), _region);
                 
+                // If there us a client secret, it should also be added here brfor provider
+                var pool = new CognitoUserPool(_userPoolId, _clientId, provider);
+               var userAttributes = new Dictionary<string, string>
+                {
+                    { "email", userDto.UserId },
+                    // Add other user attributes as needed
+                };
+
+                try
+                {
+                    await pool.SignUpAsync(userDto.UserId, userDto.Password, userAttributes, null);
+                    Console.WriteLine("User registered successfully.");
+                }
+                catch (Exception ex)
+                {
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = ex.Message,
+                        StatusCode = 400
+                    };
+                }
+               
+
+                    // Save User in DynamoDB
                     document["UserId"] = userDto.UserId;
                     document["Password"] = userDto.Password;
                     document["FullName"] = userDto.FullName;
@@ -95,7 +137,7 @@ namespace AWSLambdacommunityapp.Service
                     document["House_Number"] = userDto.House_Number;
                     document["Is_Super_Admin"] = false;
                     document["Phone_Number"] = userDto.Phone_Number;
-                    document["Email_Verified"] = true;
+                    document["Email_Verified"] = false;
 
                 var table = Table.LoadTable(_amazonDynamoDBClient, "User");
                 var res = table.PutItemAsync(document);
@@ -170,6 +212,15 @@ namespace AWSLambdacommunityapp.Service
             }
         }
 
+        private string CalculateSecretHash(string clientId, string clientSecret, string username)
+        {
+            var secret = $"{clientId}{username}{clientSecret}";
+            using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(clientSecret)))
+            {
+                var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(secret));
+                return Convert.ToBase64String(hashBytes);
+            }
+        }
 
         // OK Response
         private static APIGatewayHttpApiV2ProxyResponse OkResponse() =>

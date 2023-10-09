@@ -26,6 +26,12 @@ public class Function
     private readonly ModuleService moduleService;
     // Reference for Admin Service
     private readonly AdminSevice adminSevice;
+    // Reference for MQTT Service
+    private readonly MQTTService mqttService;
+    // Referece For User Authentication
+    private readonly UserAuthentication authentication;
+    // Reference For User Sign In Service
+    private readonly SignInService signInService;
 
     public Function()
     {
@@ -49,6 +55,15 @@ public class Function
 
         // New Admin Service Instance
         adminSevice = new AdminSevice();
+
+        // New MQTT Service Instance
+        mqttService = new MQTTService();
+
+        // New User Authentication Service Instance
+        authentication = new UserAuthentication();
+
+        // New User Sign In Service Instnace
+        signInService = new SignInService();
     }
 
    public async Task<APIGatewayHttpApiV2ProxyResponse> HelpDeskHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
@@ -85,5 +100,20 @@ public class Function
     public async Task<APIGatewayHttpApiV2ProxyResponse> AdminHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
     {
         return await adminSevice.AdminFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> MQQTHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await mqttService.MQTTFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> AuthHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await authentication.AuthenticationFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> SignInHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await signInService.SignInFunctionHandler(request, context);
     }
 }
