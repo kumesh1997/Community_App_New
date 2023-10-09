@@ -9,9 +9,11 @@
     ".NETCoreApp,Version=v6.0/linux-x64": {
       "AWSLambdacommunityapp/1.0.0": {
         "dependencies": {
+          "AWSSDK.CognitoIdentityProvider": "3.7.203.7",
           "AWSSDK.DynamoDBv2": "3.7.201.7",
           "AWSSDK.IotData": "3.7.200.51",
           "AWSSDK.S3": "3.7.203.11",
+          "Amazon.Extensions.CognitoAuthentication": "2.5.2",
           "Amazon.Lambda.APIGatewayEvents": "2.6.0",
           "Amazon.Lambda.Core": "2.1.0",
           "Amazon.Lambda.Serialization.SystemTextJson": "2.3.1",
@@ -24,6 +26,18 @@
         },
         "runtime": {
           "AWSLambdacommunityapp.dll": {}
+        }
+      },
+      "Amazon.Extensions.CognitoAuthentication/2.5.2": {
+        "dependencies": {
+          "AWSSDK.CognitoIdentity": "3.7.0.2",
+          "AWSSDK.CognitoIdentityProvider": "3.7.203.7"
+        },
+        "runtime": {
+          "lib/netstandard2.0/Amazon.Extensions.CognitoAuthentication.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
         }
       },
       "Amazon.Lambda.APIGatewayEvents/2.6.0": {
@@ -53,17 +67,40 @@
           }
         }
       },
-      "AWSSDK.Core/3.7.202.20": {
+      "AWSSDK.CognitoIdentity/3.7.0.2": {
+        "dependencies": {
+          "AWSSDK.Core": "3.7.204",
+          "AWSSDK.SecurityToken": "3.7.0.2"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/AWSSDK.CognitoIdentity.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.0.2"
+          }
+        }
+      },
+      "AWSSDK.CognitoIdentityProvider/3.7.203.7": {
+        "dependencies": {
+          "AWSSDK.Core": "3.7.204"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/AWSSDK.CognitoIdentityProvider.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.203.7"
+          }
+        }
+      },
+      "AWSSDK.Core/3.7.204": {
         "runtime": {
           "lib/netcoreapp3.1/AWSSDK.Core.dll": {
             "assemblyVersion": "3.3.0.0",
-            "fileVersion": "3.7.202.20"
+            "fileVersion": "3.7.204.0"
           }
         }
       },
       "AWSSDK.DynamoDBv2/3.7.201.7": {
         "dependencies": {
-          "AWSSDK.Core": "3.7.202.20"
+          "AWSSDK.Core": "3.7.204"
         },
         "runtime": {
           "lib/netcoreapp3.1/AWSSDK.DynamoDBv2.dll": {
@@ -74,7 +111,7 @@
       },
       "AWSSDK.IotData/3.7.200.51": {
         "dependencies": {
-          "AWSSDK.Core": "3.7.202.20"
+          "AWSSDK.Core": "3.7.204"
         },
         "runtime": {
           "lib/netcoreapp3.1/AWSSDK.IotData.dll": {
@@ -85,12 +122,23 @@
       },
       "AWSSDK.S3/3.7.203.11": {
         "dependencies": {
-          "AWSSDK.Core": "3.7.202.20"
+          "AWSSDK.Core": "3.7.204"
         },
         "runtime": {
           "lib/netcoreapp3.1/AWSSDK.S3.dll": {
             "assemblyVersion": "3.3.0.0",
             "fileVersion": "3.7.203.11"
+          }
+        }
+      },
+      "AWSSDK.SecurityToken/3.7.0.2": {
+        "dependencies": {
+          "AWSSDK.Core": "3.7.204"
+        },
+        "runtime": {
+          "lib/netcoreapp3.1/AWSSDK.SecurityToken.dll": {
+            "assemblyVersion": "3.3.0.0",
+            "fileVersion": "3.7.0.2"
           }
         }
       },
@@ -301,6 +349,13 @@
       "serviceable": false,
       "sha512": ""
     },
+    "Amazon.Extensions.CognitoAuthentication/2.5.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Y8wtU/9ZIS/LOrNPHdrtK6fby+cgZTA6R/2VLw3qs5Ci0qvsncDHd/FYNZl8fEp/bfo8FZKF3wbffT5OmVd9ew==",
+      "path": "amazon.extensions.cognitoauthentication/2.5.2",
+      "hashPath": "amazon.extensions.cognitoauthentication.2.5.2.nupkg.sha512"
+    },
     "Amazon.Lambda.APIGatewayEvents/2.6.0": {
       "type": "package",
       "serviceable": true,
@@ -322,12 +377,26 @@
       "path": "amazon.lambda.serialization.systemtextjson/2.3.1",
       "hashPath": "amazon.lambda.serialization.systemtextjson.2.3.1.nupkg.sha512"
     },
-    "AWSSDK.Core/3.7.202.20": {
+    "AWSSDK.CognitoIdentity/3.7.0.2": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-rRoHtZMcC5DYzA9WTOQd2kLor1sHC0GHippL1mCF7aA0oS4ZGm0wflm2TwtOfr2GpJk1f8Ez0Ho9xQp11cIeIw==",
-      "path": "awssdk.core/3.7.202.20",
-      "hashPath": "awssdk.core.3.7.202.20.nupkg.sha512"
+      "sha512": "sha512-fqWI5WQ+73qlnIK5KZ3peKMweX7nE8aj4uMX3t9OLAvjUP9HFDcb6N4EVn2ZXzqi35eR/LuqdwqxCHrFrUMjeA==",
+      "path": "awssdk.cognitoidentity/3.7.0.2",
+      "hashPath": "awssdk.cognitoidentity.3.7.0.2.nupkg.sha512"
+    },
+    "AWSSDK.CognitoIdentityProvider/3.7.203.7": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-FyKf1J4r378SfdIdKgCUo7PJ7Y6rdmc5ZocK/7cdIa31+p1PmO03qAAACiizORkwCzlE1D7DP4aLfe1WMgbg8g==",
+      "path": "awssdk.cognitoidentityprovider/3.7.203.7",
+      "hashPath": "awssdk.cognitoidentityprovider.3.7.203.7.nupkg.sha512"
+    },
+    "AWSSDK.Core/3.7.204": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-lr9Ttgl7sP+8JKlAXsusDfVXOGWRGB7y14tN7zUuRP1IeXacIogFxOsfDTbecuvut/LnwYOj8J3s0h7R+oHiDw==",
+      "path": "awssdk.core/3.7.204",
+      "hashPath": "awssdk.core.3.7.204.nupkg.sha512"
     },
     "AWSSDK.DynamoDBv2/3.7.201.7": {
       "type": "package",
@@ -349,6 +418,13 @@
       "sha512": "sha512-WhgKxE51AWTEF+L3K4T3qESAhZO4gAHce1lMU4+f+K1R0z+fxk4bsyQM14ALPCllS+rDGKVKwJNDl87hHYXI0g==",
       "path": "awssdk.s3/3.7.203.11",
       "hashPath": "awssdk.s3.3.7.203.11.nupkg.sha512"
+    },
+    "AWSSDK.SecurityToken/3.7.0.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-OFZjQ+AM4tDP/gVpqHm2MOY2Ibr/3PfWTACc7nZEm1AjrBg514/n70+Ooo9mqzBVFwOv11+QbHvKxbR/+jHv8A==",
+      "path": "awssdk.securitytoken/3.7.0.2",
+      "hashPath": "awssdk.securitytoken.3.7.0.2.nupkg.sha512"
     },
     "Microsoft.Extensions.Configuration/7.0.0": {
       "type": "package",

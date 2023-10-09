@@ -37,3 +37,7 @@ C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunitya
 C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\linux-x64\MQTTnet.Extensions.ManagedClient.dll
 C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\linux-x64\System.Text.Encodings.Web.dll
 C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\linux-x64\System.Text.Json.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\linux-x64\AWSSDK.CognitoIdentityProvider.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\linux-x64\Amazon.Extensions.CognitoAuthentication.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\linux-x64\AWSSDK.CognitoIdentity.dll
+C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Release\net6.0\linux-x64\AWSSDK.SecurityToken.dll

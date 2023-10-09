@@ -44,6 +44,10 @@
         "net6.0": {
           "targetAlias": "net6.0",
           "dependencies": {
+            "AWSSDK.CognitoIdentityProvider": {
+              "target": "Package",
+              "version": "[3.7.203.7, )"
+            },
             "AWSSDK.DynamoDBv2": {
               "target": "Package",
               "version": "[3.7.201.7, )"
@@ -55,6 +59,10 @@
             "AWSSDK.S3": {
               "target": "Package",
               "version": "[3.7.203.11, )"
+            },
+            "Amazon.Extensions.CognitoAuthentication": {
+              "target": "Package",
+              "version": "[2.5.2, )"
             },
             "Amazon.Lambda.APIGatewayEvents": {
               "target": "Package",

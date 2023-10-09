@@ -14,9 +14,12 @@
     <SourceRoot Include="C:\Program Files (x86)\Microsoft Visual Studio\Shared\NuGetPackages\" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <PkgAWSSDK_Core Condition=" '$(PkgAWSSDK_Core)' == '' ">C:\Users\Tharindu  Kumesh\.nuget\packages\awssdk.core\3.7.202.20</PkgAWSSDK_Core>
+    <PkgAWSSDK_Core Condition=" '$(PkgAWSSDK_Core)' == '' ">C:\Users\Tharindu  Kumesh\.nuget\packages\awssdk.core\3.7.204</PkgAWSSDK_Core>
+    <PkgAWSSDK_SecurityToken Condition=" '$(PkgAWSSDK_SecurityToken)' == '' ">C:\Users\Tharindu  Kumesh\.nuget\packages\awssdk.securitytoken\3.7.0.2</PkgAWSSDK_SecurityToken>
     <PkgAWSSDK_S3 Condition=" '$(PkgAWSSDK_S3)' == '' ">C:\Users\Tharindu  Kumesh\.nuget\packages\awssdk.s3\3.7.203.11</PkgAWSSDK_S3>
     <PkgAWSSDK_IotData Condition=" '$(PkgAWSSDK_IotData)' == '' ">C:\Users\Tharindu  Kumesh\.nuget\packages\awssdk.iotdata\3.7.200.51</PkgAWSSDK_IotData>
     <PkgAWSSDK_DynamoDBv2 Condition=" '$(PkgAWSSDK_DynamoDBv2)' == '' ">C:\Users\Tharindu  Kumesh\.nuget\packages\awssdk.dynamodbv2\3.7.201.7</PkgAWSSDK_DynamoDBv2>
+    <PkgAWSSDK_CognitoIdentityProvider Condition=" '$(PkgAWSSDK_CognitoIdentityProvider)' == '' ">C:\Users\Tharindu  Kumesh\.nuget\packages\awssdk.cognitoidentityprovider\3.7.203.7</PkgAWSSDK_CognitoIdentityProvider>
+    <PkgAWSSDK_CognitoIdentity Condition=" '$(PkgAWSSDK_CognitoIdentity)' == '' ">C:\Users\Tharindu  Kumesh\.nuget\packages\awssdk.cognitoidentity\3.7.0.2</PkgAWSSDK_CognitoIdentity>
   </PropertyGroup>
 </Project>
