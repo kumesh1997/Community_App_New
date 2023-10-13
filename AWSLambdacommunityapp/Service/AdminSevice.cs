@@ -11,6 +11,10 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Amazon.DynamoDBv2.DocumentModel;
 using Amazon.DynamoDBv2;
+using Amazon.CognitoIdentityProvider;
+using Amazon;
+using Amazon.Extensions.CognitoAuthentication;
+using Amazon.Runtime;
 
 namespace AWSLambdacommunityapp.Service
 {
@@ -19,12 +23,21 @@ namespace AWSLambdacommunityapp.Service
         private readonly DynamoDBContext _dynamoDbContext;
         private readonly AmazonDynamoDBClient _amazonDynamoDBClient;
 
+        private readonly IAmazonCognitoIdentityProvider _cognitoClient;
+        private readonly string _userPoolId = "us-east-1_dRHFkZCMr";
+        private readonly string _clientId = "7drftsbsv2tm316d72o6ek6422";
+        private readonly string _clientSecret = "1q807qber9cpm1blu782jndeo6fg7mck6ncrpdbblq9c31bib6jk";
+        private readonly RegionEndpoint _region = RegionEndpoint.USEast1;
+
         public AdminSevice()
         {
             // Instance of ConnectToBynamoDB 
             DynamoDB connectToDynamoDB = new DynamoDB();
             _dynamoDbContext = connectToDynamoDB.DBAccessFunction();
             _amazonDynamoDBClient = connectToDynamoDB.AmazonDynamoDBClient();
+
+            var region = RegionEndpoint.USEast1; // e.g., RegionEndpoint.USWest2
+            _cognitoClient = new AmazonCognitoIdentityProviderClient(region);
         }
 
 
@@ -70,6 +83,30 @@ namespace AWSLambdacommunityapp.Service
             {
                 if (userDto != null || userDto.Email_Verified != false)
                 {
+                    var provider = new AmazonCognitoIdentityProviderClient(
+                    new BasicAWSCredentials(_clientId, _clientSecret), _region);
+
+                    // If there us a client secret, it should also be added here brfor provider
+                    var pool = new CognitoUserPool(_userPoolId, _clientId, provider);
+                    var userAttributes = new Dictionary<string, string>
+                    {
+                        { "email", userDto.UserId },
+                        // Add other user attributes as needed
+                    };
+
+                    try
+                    {
+                        await pool.SignUpAsync(userDto.UserId, userDto.Password, userAttributes, null);
+                        Console.WriteLine("User registered successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        return new APIGatewayHttpApiV2ProxyResponse()
+                        {
+                            Body = ex.Message,
+                            StatusCode = 400
+                        };
+                    }
                     if (userDto.Is_Super_Admin == true && userDto.policyList != null)
                     {
                         /*user.UserId = userDto.UserId;
@@ -125,6 +162,7 @@ namespace AWSLambdacommunityapp.Service
                         document["Is_Super_Admin"] = false;
                         document["Phone_Number"] = userDto.Phone_Number;
                         document["Email_Verified"] = true;
+                        document["Is_Admin"] = true;
                         if (userDto.policyList != null)
                         {
                             foreach (var policy in userDto.policyList)
