@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "8IpIYg8KGQRPWqN+9SevcNHqdgNlukVEj8UQu1xfr4ZAjY2MvEolBsNGJrZnUNLyDe8/b3t54KuYKKisK4GzmQ==",
+  "dgSpecHash": "MXD4X6STlnk/vAljLAEvHgSQ0N5Msrd84Wa4OwhB0SaLl+t1Ewv8kLjsoTxaYC4i0sGUpBJibrl30CG9XEJ+kg==",
   "success": true,
   "projectFilePath": "C:\\Users\\Tharindu  Kumesh\\source\\repos\\AWSLambdacommunityapp\\AWSLambdacommunityapp\\AWSLambdacommunityapp.csproj",
   "expectedPackageFiles": [
@@ -33,8 +33,6 @@
     "C:\\Users\\Tharindu  Kumesh\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
     "C:\\Users\\Tharindu  Kumesh\\.nuget\\packages\\system.text.encodings.web\\7.0.0\\system.text.encodings.web.7.0.0.nupkg.sha512",
     "C:\\Users\\Tharindu  Kumesh\\.nuget\\packages\\system.text.json\\7.0.0\\system.text.json.7.0.0.nupkg.sha512",
-    "C:\\Users\\Tharindu  Kumesh\\.nuget\\packages\\microsoft.netcore.app.runtime.linux-x64\\6.0.18\\microsoft.netcore.app.runtime.linux-x64.6.0.18.nupkg.sha512",
-    "C:\\Users\\Tharindu  Kumesh\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.linux-x64\\6.0.18\\microsoft.aspnetcore.app.runtime.linux-x64.6.0.18.nupkg.sha512",
     "C:\\Users\\Tharindu  Kumesh\\.nuget\\packages\\microsoft.netcore.app.crossgen2.win-x64\\6.0.18\\microsoft.netcore.app.crossgen2.win-x64.6.0.18.nupkg.sha512"
   ],
   "logs": []
