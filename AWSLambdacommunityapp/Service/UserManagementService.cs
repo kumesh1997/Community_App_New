@@ -10,6 +10,7 @@ using Amazon.Lambda.Core;
 using Amazon.Runtime;
 using AWSLambdacommunityapp.Dto;
 using AWSLambdacommunityapp.Model;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -71,33 +72,18 @@ namespace AWSLambdacommunityapp.Service
             {
                 return await HandleGetUserDetailsRequest(request);
             }
+            else if (httpMethod == "GET" && request.Body == null && request.PathParameters == null)
+            {
+                return await HandleGetUserListDetailsRequest(request);
+            }
             // Handle unsupported or unrecognized HTTP methods
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
         }
 
-        // Handle User Register
-        /*private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUserRegistrationRequest(
-           APIGatewayHttpApiV2ProxyRequest request)
-        {
-            var user = JsonSerializer.Deserialize<User>(request.Body);
-            try
-            {
-                user.Email_Verified = true;
-                user.Is_Super_Admin = false;
-                await _dynamoDbContext.SaveAsync(user);
-                return OkResponse();
-            }
-            catch (Exception ex)
-            {
-                return BadResponse("User was not registered !!! "+ ex.Message);
-            }
-            
-        }*/
-
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUserRegistrationRequest(
           APIGatewayHttpApiV2ProxyRequest request)
         {
-            var userDto = JsonSerializer.Deserialize<UserRegisterDto>(request.Body);
+            var userDto = System.Text.Json.JsonSerializer.Deserialize<UserRegisterDto>(request.Body);
             var document = new Document();
             try
             {
@@ -138,6 +124,7 @@ namespace AWSLambdacommunityapp.Service
                     document["Is_Super_Admin"] = false;
                     document["Phone_Number"] = userDto.Phone_Number;
                     document["Email_Verified"] = false;
+                    document["Is_Admin"] = false;
 
                 var table = Table.LoadTable(_amazonDynamoDBClient, "User");
                 var res = table.PutItemAsync(document);
@@ -153,29 +140,8 @@ namespace AWSLambdacommunityapp.Service
             }
         }
 
-        // Get User Details
-        /*private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetUserDetailsRequest(APIGatewayHttpApiV2ProxyRequest request)
-        {
-            try
-            {
-                // get the parameter value
-                request.PathParameters.TryGetValue("Id", out var Id);
-                // Get Users
-                var users = await _dynamoDbContext.ScanAsync<User>(default).GetRemainingAsync();
-                var Selected_User = users.Where(v => v.UserId.Equals(Id));
-                return new APIGatewayHttpApiV2ProxyResponse
-                {
-                    Body = JsonSerializer.Serialize(Selected_User),
-                    StatusCode = 200
-                };
-            }
-            catch (Exception ex)
-            {
-                return BadResponse(" Exception " + ex.Message);
-            }
-        }*/
 
-
+        // Get User Details of a Specific User
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetUserDetailsRequest(APIGatewayHttpApiV2ProxyRequest request)
         {
             try
@@ -187,20 +153,9 @@ namespace AWSLambdacommunityapp.Service
                 var search = await table.GetItemAsync(Id);
                 if (search != null)
                 {
-                    var user = new User
-                    {
-                        UserId = search["UserId"].AsString(),
-                        // Add other static properties here
-
-                        // Retrieve dynamic attributes as a dictionary
-                        /*AdditionalAttributes = search.ToDictionary()
-                       .Where(kvp => !string.Equals(kvp.Key, "UserId", StringComparison.OrdinalIgnoreCase)) // Exclude UserId from dynamic attributes
-                       .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.AsString()) // Convert all values to string for simplicity*/
-
-                    };
                     return new APIGatewayHttpApiV2ProxyResponse
                     {
-                        Body = JsonSerializer.Serialize(user),
+                        Body = JsonConvert.SerializeObject(search),
                         StatusCode = 200
                     };
                 }
@@ -212,7 +167,54 @@ namespace AWSLambdacommunityapp.Service
             }
         }
 
-        private string CalculateSecretHash(string clientId, string clientSecret, string username)
+        // Get a List of Users
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetUserListDetailsRequest(APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                // Define a scan filter to find items where the "Email_Verified" attribute is false
+                var scanFilter = new ScanFilter();
+                scanFilter.AddCondition("Email_Verified", ScanOperator.Equal, false);
+
+                // Perform the scan operation with the filter
+                var userList = await _dynamoDbContext.FromScanAsync<User>(new ScanOperationConfig
+                {
+                    Filter = scanFilter
+                }).GetRemainingAsync();
+
+                if (userList != null && userList.Count > 0)
+                {
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = System.Text.Json.JsonSerializer.Serialize(userList),
+                        StatusCode = 200
+                    };
+                }
+                else
+                {
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = "No unverified users found.",
+                        StatusCode = 404
+                    };
+                }
+            }
+            catch(Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = "Error: " + ex.Message,
+                    StatusCode = 500
+                };
+            }
+            return new APIGatewayHttpApiV2ProxyResponse()
+            {
+                Body = "Users are not Available !!!",
+                StatusCode = 400
+            };
+        }
+
+            private string CalculateSecretHash(string clientId, string clientSecret, string username)
         {
             var secret = $"{clientId}{username}{clientSecret}";
             using (var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(clientSecret)))

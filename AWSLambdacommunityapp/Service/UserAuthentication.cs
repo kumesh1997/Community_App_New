@@ -72,6 +72,8 @@ namespace AWSLambdacommunityapp.Service
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
         }
 
+
+        // Verify the Email Address
         private async Task<APIGatewayHttpApiV2ProxyResponse> VerifyUser(
          APIGatewayHttpApiV2ProxyRequest request)
         {
@@ -120,7 +122,7 @@ namespace AWSLambdacommunityapp.Service
                         return new APIGatewayHttpApiV2ProxyResponse
                         {
                             StatusCode = 200,
-                            Body = $"User registration confirmed successfully. Access Token: {accessToken}, Refresh Token: {refreshToken}",
+                            Body = JsonSerializer.Serialize($"User registration confirmed successfully. Access_Token: {accessToken}, Refresh_Token: {refreshToken}"),
                         };
                     }
                     else
@@ -195,7 +197,7 @@ namespace AWSLambdacommunityapp.Service
                     return new APIGatewayHttpApiV2ProxyResponse
                     {
                         StatusCode = 200,
-                        Body = $"New access token and refresh token generated successfully. Access Token: {accessToken}, Refresh Token: {refreshToken}",
+                        Body = JsonSerializer.Serialize($"New access token and refresh token generated successfully. Access_Token: {accessToken}, Refresh_Token: {refreshToken}"),
                     };
                 }
                 else
