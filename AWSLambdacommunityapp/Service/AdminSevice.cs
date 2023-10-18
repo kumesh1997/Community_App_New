@@ -109,12 +109,6 @@ namespace AWSLambdacommunityapp.Service
                     }
                     if (userDto.Is_Super_Admin == true && userDto.policyList != null)
                     {
-                        /*user.UserId = userDto.UserId;
-                        user.Password = userDto.Password;
-                        user.Name = userDto.Name;
-                        user.Is_Super_Admin = true;
-                        user.Email_Verified = true;
-                        user.Phone_Number = userDto.Phone_Number;*/
                         document["UserId"] = userDto.UserId;
                         document["Password"] = userDto.Password;
                         document["FullName"] = userDto.FullName;
@@ -125,8 +119,8 @@ namespace AWSLambdacommunityapp.Service
                         document["Is_Super_Admin"] = true;
                         document["Phone_Number"] = userDto.Phone_Number;
                         document["Email_Verified"] = true;
-                        
-                            foreach (var policy in userDto.policyList)
+                        document["Condominum_Id"] = userDto.Condominium_ID;
+                        foreach (var policy in userDto.policyList)
                             {
                                 foreach (var kvp in policy)
                                 {
@@ -136,22 +130,6 @@ namespace AWSLambdacommunityapp.Service
 
                     }else if (userDto.policyList != null && userDto.Is_Super_Admin != true)
                     {
-                        /* user.UserId = userDto.UserId;
-                         user.Password = userDto.Password;
-                         user.Name = userDto.Name;
-                         user.Is_Super_Admin = false;
-                         user.Email_Verified = true;
-                         user.Phone_Number = userDto.Phone_Number;
-                         if (policyList != null)
-                         {
-                             foreach (var policyItem in policyList)
-                             {
-                                 foreach (var kvp in policyItem)
-                                 {
-                                     user.AdditionalAttributes.Add(kvp.Key, kvp.Value);
-                                 }
-                             }
-                         }*/
                         document["UserId"] = userDto.UserId;
                         document["Password"] = userDto.Password;
                         document["FullName"] = userDto.FullName;
@@ -163,6 +141,7 @@ namespace AWSLambdacommunityapp.Service
                         document["Phone_Number"] = userDto.Phone_Number;
                         document["Email_Verified"] = true;
                         document["Is_Admin"] = true;
+                        document["Condominum_Id"] = userDto.Condominium_ID;
                         if (userDto.policyList != null)
                         {
                             foreach (var policy in userDto.policyList)

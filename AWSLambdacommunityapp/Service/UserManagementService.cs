@@ -11,6 +11,7 @@ using Amazon.Runtime;
 using AWSLambdacommunityapp.Dto;
 using AWSLambdacommunityapp.Model;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -80,6 +81,7 @@ namespace AWSLambdacommunityapp.Service
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
         }
 
+        // Register User
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUserRegistrationRequest(
           APIGatewayHttpApiV2ProxyRequest request)
         {
@@ -111,8 +113,6 @@ namespace AWSLambdacommunityapp.Service
                         StatusCode = 400
                     };
                 }
-               
-
                     // Save User in DynamoDB
                     document["UserId"] = userDto.UserId;
                     document["Password"] = userDto.Password;
@@ -125,6 +125,7 @@ namespace AWSLambdacommunityapp.Service
                     document["Phone_Number"] = userDto.Phone_Number;
                     document["Email_Verified"] = false;
                     document["Is_Admin"] = false;
+                    document["Condominum_Id"] = userDto.Condominium_ID;
 
                 var table = Table.LoadTable(_amazonDynamoDBClient, "User");
                 var res = table.PutItemAsync(document);
@@ -153,9 +154,20 @@ namespace AWSLambdacommunityapp.Service
                 var search = await table.GetItemAsync(Id);
                 if (search != null)
                 {
+                    // Create a new JSON object in the desired format
+                    var transformedData = new JObject();
+
+                    foreach (var property in search)
+                    {
+                        var propertyName = property.Key;
+                        var propertyValue = property.Value.ToString();
+
+                        transformedData[propertyName] = propertyValue;
+                    }
+
                     return new APIGatewayHttpApiV2ProxyResponse
                     {
-                        Body = JsonConvert.SerializeObject(search),
+                        Body = JsonConvert.SerializeObject(transformedData),
                         StatusCode = 200
                     };
                 }

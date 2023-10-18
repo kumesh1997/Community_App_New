@@ -16,5 +16,6 @@ namespace AWSLambdacommunityapp.Dto
         public string Floor { get; set; }
         public string House_Number { get; set; }
         public string Phone_Number { get; set; }
+        public string Condominium_ID { get; set; }
     }
 }

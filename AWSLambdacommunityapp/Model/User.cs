@@ -1,5 +1,6 @@
 ﻿using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,19 @@ namespace AWSLambdacommunityapp.Model
     {
         public string UserId { get; set; }
 
-        public Dictionary<string, string> AdditionalAttributes = new Dictionary<string, string>();
+        //[DynamoDBProperty("Attributes")]
+        //public Dictionary<string, AttributeValue> Attributes { get; set; }
+        public string Password { get; set; }
+        public string FullName { get; set; }
+        public string NIC { get; set; }
+        public string Tower { get; set; }
+        public string Floor { get; set; }
+        public string House_Number { get; set; }
+        public bool Is_Super_Admin { get; set; }
+        public string Phone_Number { get; set; }
+        public bool Email_Verified { get; set; }
+        public bool Is_Admin { get; set; }
+        public string Condominum_Id { get; set; }
     }
+
 }

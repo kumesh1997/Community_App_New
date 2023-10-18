@@ -19,6 +19,8 @@ namespace AWSLambdacommunityapp.Dto
         public string Phone_Number { get; set; }
         public bool Email_Verified { get; set; }
 
+        public string Condominium_ID { get; set; }
+
         //public List<Dictionary<string, bool>> policyList { get; set; }
         public Dictionary<string, bool>[] policyList { get; set; }
     }
