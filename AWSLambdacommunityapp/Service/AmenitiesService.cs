@@ -1,8 +1,10 @@
 ﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.Model;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using AWSLambdacommunityapp.Dto;
 using AWSLambdacommunityapp.Model;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,8 +49,8 @@ namespace AWSLambdacommunityapp.Service
             }
             else if (httpMethod == "POST" && request.Body != null && request.PathParameters == null)
             {
-                return await HandlePostRequest(request);
-                //return await HandleBookingRequest(request);
+                //return await HandlePostRequest(request);
+                return await HandleBookingRequest(request);
             }
             else if (httpMethod == "POST" && request.Body == null && request.PathParameters == null)
             {
@@ -63,7 +65,7 @@ namespace AWSLambdacommunityapp.Service
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandlePostRequest(
            APIGatewayHttpApiV2ProxyRequest request)
         {
-            var amenity = JsonSerializer.Deserialize<AmenitiesDto>(request.Body);
+            var amenity = System.Text.Json.JsonSerializer.Deserialize<AmenitiesDto>(request.Body);
             Amenities newAmenity = new Amenities();
             // Auto Generate ID
             newAmenity.Id = GenerateId();
@@ -74,6 +76,7 @@ namespace AWSLambdacommunityapp.Service
             await _dynamoDbContext.SaveAsync(newAmenity);
             return OkResponse();
         }
+
 
         // Initial Booking for every day
          private async Task<APIGatewayHttpApiV2ProxyResponse> HandleDailyInitialBookingRequest(
@@ -95,39 +98,64 @@ namespace AWSLambdacommunityapp.Service
             }
              return OkResponse();
          }
+
+
         // New Booking for a selected date
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleBookingRequest(
            APIGatewayHttpApiV2ProxyRequest request)
         {
-            //request.PathParameters.TryGetValue("Id", out var Id);
-            var amenityBookingDto = JsonSerializer.Deserialize<AmenityBookingDto>(request.Body);
+            // Get the Data Comming from Request
+            var amenityBookingDto = System.Text.Json.JsonSerializer.Deserialize<AmenityBookingDto>(request.Body);
+            // Get a List of Amenities available
             var amenityList = await _dynamoDbContext.ScanAsync<Amenities>(default).GetRemainingAsync();
+            // Get a List of Booking
             var amenityBookingList = await _dynamoDbContext.ScanAsync<AmenityBooking>(default).GetRemainingAsync();
-            var booking = CheckAvailabilityRequest(amenityBookingDto.FromTime, amenityBookingDto.AmenityTypeId, amenityBookingDto.NumberofBookingByTheUser, amenityList, amenityBookingList);
-            if (booking != null)
+            // Check the availability of Booking
+            var availability_response = CheckAvailabilityRequest(amenityBookingDto.FromTime, amenityBookingDto.AmenityTypeId, amenityBookingDto.NumberofBookingByTheUser, amenityList, amenityBookingList);
+            if (availability_response.amenitybooking != null)
             {
-                booking.BookingCount = booking.BookingCount + amenityBookingDto.NumberofBookingByTheUser;
-                //booking.AttendeesList.Add( new AmenityUser(amenityBookingDto.AttendeeId, amenityBookingDto.NumberofBookingByTheUser, amenityBookingDto.FromTime));
-                await _dynamoDbContext.SaveAsync(booking);
+                // add new amenity use count
+                availability_response.amenitybooking.BookingCount = availability_response.amenitybooking.BookingCount + amenityBookingDto.NumberofBookingByTheUser;
+                if (availability_response.capacity == availability_response.amenitybooking.BookingCount)
+                {
+                    // make the isfull flag true
+                    availability_response.amenitybooking.IsFull = true;
+                    await _dynamoDbContext.SaveAsync(availability_response.amenitybooking);
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = JsonConvert.SerializeObject(availability_response.amenitybooking),
+                        StatusCode = 200
+                    };
+                }else if (availability_response.capacity < availability_response.amenitybooking.BookingCount)
+                {
+                    // revert the amenity user count 
+                    availability_response.amenitybooking.BookingCount = availability_response.amenitybooking.BookingCount - amenityBookingDto.NumberofBookingByTheUser;
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = "The Amenity is Full !!!",
+                        StatusCode = 503
+                    };
+                }
+                
             }
             else
             {
-                return BadResponse("Booking is not Available");
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = "The Amenity is Full !!!",
+                    StatusCode = 503
+                };
             }
-            /*
             return new APIGatewayHttpApiV2ProxyResponse()
             {
-                Body = JsonSerializer.Serialize(amenityBookingDto),
-                StatusCode = 200
+                Body = "Amenity not Found !!!",
+                StatusCode = 503
             };
-            */
-
-            return BadResponse(" Bad Request !!!!");
         }
 
 
             // Check Availability
-            public AmenityBooking CheckAvailabilityRequest(int time, string amenityTypeId, int count, List<Amenities> amenityList, List<AmenityBooking> amenityBookingList)
+            public AvailabilityResponse CheckAvailabilityRequest(int time, string amenityTypeId, int count, List<Amenities> amenityList, List<AmenityBooking> amenityBookingList)
         {
             //var amenityList = await _dynamoDbContext.ScanAsync<Amenities>(default).GetRemainingAsync();
             int amenityCapacity = 0;
@@ -146,28 +174,41 @@ namespace AWSLambdacommunityapp.Service
             //var amenityBookingList = await _dynamoDbContext.ScanAsync<AmenityBooking>(default).GetRemainingAsync();
             // Find the booking
             var booking = FindBookingByTimeRange(amenityBookingList, fromTime, toTime, amenityTypeId);
-            if (booking != null && booking.IsFull != false)
+            if (booking != null && booking.IsFull != true)
             {
-                if (amenityCapacity < count)
+                if (amenityCapacity > booking.BookingCount)
                 {
-                    return booking;
+                    return new AvailabilityResponse() {
+                        amenitybooking = booking,
+                        capacity = amenityCapacity
+                    };
                 }
                 else
                 {
-                    return null;
+
+                    return new AvailabilityResponse()
+                    {
+                        amenitybooking = null,
+                        capacity = amenityCapacity
+                    };
                 }
             }
             // return the response
-            return null;
+            return new AvailabilityResponse()
+            {
+                amenitybooking = null,
+                capacity = amenityCapacity
+            };
         }
 
         public AmenityBooking FindBookingByTimeRange(List<AmenityBooking> bookings, int startTime, int endTime, string amenityTypeId)
         {
             // Use LINQ to find the first booking that falls within the time range
             AmenityBooking matchingBooking = bookings
-                .FirstOrDefault(booking => booking.Time >= startTime && booking.Time <= endTime && booking.AmenityTypeId == amenityTypeId);
+                .FirstOrDefault(booking => (booking.Time <= startTime || booking.Time == startTime ) && booking.AmenityTypeId == amenityTypeId);
             return matchingBooking;
         }
+
 
         public static DateTime ConvertEpochToDateTime(int epochValue)
         {
@@ -179,6 +220,7 @@ namespace AWSLambdacommunityapp.Service
 
             return result;
         }
+
 
         public static int CalculateNextEpochAfter30Minutes(int currentEpoch)
         {

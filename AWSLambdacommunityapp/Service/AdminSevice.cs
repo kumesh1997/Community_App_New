@@ -15,6 +15,7 @@ using Amazon.CognitoIdentityProvider;
 using Amazon;
 using Amazon.Extensions.CognitoAuthentication;
 using Amazon.Runtime;
+using Amazon.DynamoDBv2.Model;
 
 namespace AWSLambdacommunityapp.Service
 {
@@ -65,9 +66,9 @@ namespace AWSLambdacommunityapp.Service
             {
                 return await HandleAdminRegistrationRequest(request);
             }
-            else if (httpMethod == "GET" && request.Body == null && request.PathParameters != null)
+            else if (httpMethod == "PUT" && request.Body != null && request.PathParameters == null)
             {
-                //return await HandleGetUserDetailsRequest(request);
+                return await HandleUpdateAdminRequest(request);
             }
             // Handle unsupported or unrecognized HTTP methods
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
@@ -170,9 +171,100 @@ namespace AWSLambdacommunityapp.Service
 
         }
 
+        // Handle Update Admin Policies
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUpdateAdminRequest(
+           APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                var updatedUser = System.Text.Json.JsonSerializer.Deserialize<ApproveAdmin>(request.Body);
+                if (string.IsNullOrWhiteSpace(updatedUser.UserId))
+                {
+                    return BadResponse("Invalid request. 'UserId' is required in the request body.");
+                }
 
-        // OK Response
-        private static APIGatewayHttpApiV2ProxyResponse OkResponse() =>
+                // Get Users
+                var table = Table.LoadTable(_amazonDynamoDBClient, "User");
+                var user = await table.GetItemAsync(updatedUser.UserId);
+
+                if (user != null)
+                {
+                    var updateExpression = "SET";
+                    var expressionAttributeValues = new Dictionary<string, AttributeValue>();
+
+                    if (updatedUser.policyList != null)
+                    {
+                        var document = new Document();
+                        foreach (var attribute in updatedUser.policyList)
+                        {
+                            foreach (var item in attribute)
+                            {
+                                // Add the attribute to the update expression and expression attribute values
+                                string attributeName = item.Key;
+                                if (user.ContainsKey(attributeName))
+                                {
+                                    updateExpression += $" {attributeName} = :{attributeName},";
+                                    expressionAttributeValues[$":{attributeName}"] = new AttributeValue { N = "1" };
+                                }
+                                else
+                                {
+                                    // If the attribute doesn't exist, create it with a value of 1
+                                    updateExpression += $" {attributeName} = :{attributeName},";
+                                    expressionAttributeValues[$":{attributeName}"] = new AttributeValue { N = "1" };
+
+                                    // Add the new attribute to the user's data
+                                    user[attributeName] = 1;
+                                }
+                            }
+
+                        }
+
+                        // Remove the trailing comma from the update expression
+                        updateExpression = updateExpression.TrimEnd(',');
+
+                        // Create an UpdateItemRequest to specify the update
+                        var updateRequest = new UpdateItemRequest
+                        {
+                            TableName = "User",
+                            Key = new Dictionary<string, AttributeValue>
+                        {
+                            { "UserId", new AttributeValue { S = updatedUser.UserId } }
+                        },
+                            UpdateExpression = updateExpression,
+                            ExpressionAttributeValues = expressionAttributeValues
+                        };
+
+                        // Perform the update operation
+                        await _amazonDynamoDBClient.UpdateItemAsync(updateRequest);
+
+                        return new APIGatewayHttpApiV2ProxyResponse
+                        {
+                            StatusCode = 200,
+                            Body = "User attributes updated successfully."
+                        };
+                    }
+                    else
+                    {
+                        return BadResponse("Invalid request. 'AttributesToUpdate' is missing or empty in the request body.");
+                    }
+                }
+                else
+                {
+                    return BadResponse("User not found for the provided UserId.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = "Error: " + ex.Message,
+                    StatusCode = 500
+                };
+            }
+        }
+
+            // OK Response
+            private static APIGatewayHttpApiV2ProxyResponse OkResponse() =>
             new APIGatewayHttpApiV2ProxyResponse()
             {
                 StatusCode = 200
