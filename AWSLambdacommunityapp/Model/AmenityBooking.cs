@@ -10,10 +10,13 @@ namespace AWSLambdacommunityapp.Model
     {
         public string Id { get; set; }
         public string AmenityTypeId { get; set; }
-        public List<AmenityUser> AttendeesList { get; set; } 
         public int BookingCount { get; set; }
-        public bool IsFull { get; set; } = false;
-        // 30 Mins Slots
         public int Time { get; set; }
+
+        public int Requested_Time { get; set; }
+        public  string Booking_Status { get; set; }
+        public string UserId { get; set; }
+
+        public int Updated_Time { get; set; }
     }
 }

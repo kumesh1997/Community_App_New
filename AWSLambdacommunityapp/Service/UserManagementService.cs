@@ -196,7 +196,7 @@ namespace AWSLambdacommunityapp.Service
                 // Perform the scan operation with the filter
                 var userList = await _dynamoDbContext.FromScanAsync<User>(new ScanOperationConfig
                 {
-                    Filter = scanFilter
+                    //Filter = scanFilter
                 }).GetRemainingAsync();
 
                 if (userList != null && userList.Count > 0)

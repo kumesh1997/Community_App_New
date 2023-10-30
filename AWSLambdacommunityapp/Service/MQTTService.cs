@@ -4,29 +4,27 @@ using Amazon.Lambda.Core;
 using MQTTnet;
 using MQTTnet.Client;
 using Amazon.IotData.Model;
-
+using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2;
+using Amazon.CognitoIdentityProvider;
+using AWSLambdacommunityapp.Model;
+using AWSLambdacommunityapp.Dto;
 
 namespace AWSLambdacommunityapp.Service
 {
     public class MQTTService
     {
         private IMqttClient _mqttClient;
-        //private readonly ILogger _logger;
+        private readonly DynamoDBContext _dynamoDbContext;
+        private readonly AmazonDynamoDBClient _amazonDynamoDBClient;
 
-       /* public MQTTService()
+        public MQTTService()
         {
-            // Create an MQTT client.
-            var factory = new MqttFactory();
-            _mqttClient = factory.CreateMqttClient();
-
-            // Configure MQTT client options.
-            var options = new MqttClientOptionsBuilder()
-                .WithTcpServer("220.247.224.226", 1883) // Replace with your MQTT broker's address and port
-                .WithClientId(Guid.NewGuid().ToString())
-                .Build();
-
-            _mqttClient.ConnectAsync(options).Wait(); // Wait for the connection to be established.
-        }*/
+            // Instance of ConnectToBynamoDB 
+            DynamoDB connectToDynamoDB = new DynamoDB();
+            _dynamoDbContext = connectToDynamoDB.DBAccessFunction();
+            _amazonDynamoDBClient = connectToDynamoDB.AmazonDynamoDBClient();
+        }
 
         public async Task<APIGatewayHttpApiV2ProxyResponse> MQTTFunctionHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
         {
@@ -47,9 +45,17 @@ namespace AWSLambdacommunityapp.Service
                 };
             }
 
-            if (httpMethod == "GET" && request.Body == null && request.PathParameters != null)
+            if (httpMethod == "GET" && request.Body != null && request.PathParameters == null)
             {
                 return await HandleGetListRequest(request);
+            }
+            else if (httpMethod == "PUT" && request.Body != null && request.PathParameters == null)
+            {
+                return await HandleUpdateRequest(request);
+            }
+            else if (httpMethod == "GET" && request.Body == null && request.PathParameters == null)
+            {
+                return await HandleGetRequest(request);
             }
             // Handle unsupported or unrecognized HTTP methods
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
@@ -58,12 +64,13 @@ namespace AWSLambdacommunityapp.Service
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetListRequest(
            APIGatewayHttpApiV2ProxyRequest request)
         {
-            request.PathParameters.TryGetValue("Id", out var Id);
+            //request.PathParameters.TryGetValue("Id", out var Id);
+            var REQ = System.Text.Json.JsonSerializer.Deserialize<MQTTRequest>(request.Body);
             try
             {
                 // MQTT topic and message to publish.
                 string topic = "sos/alarm";
-                string message = Id.ToString();
+                string message = REQ.Topic.ToString();
                 message = RemoveSpaces(message);
 
                 // Initialize MQTT client if not already initialized.
@@ -85,6 +92,13 @@ namespace AWSLambdacommunityapp.Service
                
                 if (res.IsSuccess)
                 {
+                    SOS sOS = new SOS();
+                    sOS.Id = GenerateId();
+                    sOS.UserId = REQ.UserID;
+                    sOS.SOSTime = GetCurrentEpoch();
+                    sOS.Status = "opened";
+
+                    await _dynamoDbContext.SaveAsync(sOS);
                     return OkResponse();
                     // Disconnect the MQTT client after publishing.
                     //await _mqttClient.DisconnectAsync();
@@ -102,7 +116,83 @@ namespace AWSLambdacommunityapp.Service
             //return null;
         }
 
-        private void InitializeMqttClient()
+        // Get the SOS List
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetRequest(
+         APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                var sos_List = await _dynamoDbContext.ScanAsync<SOS>(default).GetRemainingAsync();
+                // Filter Booking Where Status is not Accepted
+                var filteredSOSList = sos_List.Where(v => v.Status.ToLower() != "closed" || v.Status.ToLower() != "inprogress").ToList();
+                if (filteredSOSList != null && filteredSOSList.Count > 0)
+                {
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = System.Text.Json.JsonSerializer.Serialize(filteredSOSList),
+                        StatusCode = 200
+                    };
+                }
+            }
+            catch (Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = ex.Message,
+                    StatusCode = 503
+                };
+            }
+            return new APIGatewayHttpApiV2ProxyResponse()
+            {
+                Body = "SOS List not Found !!! ",
+                StatusCode = 503
+            };
+        }
+            // Update SOS
+            private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUpdateRequest(
+          APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                var update = System.Text.Json.JsonSerializer.Deserialize<MQTTUpdate>(request.Body);
+                try
+                {
+                    // Find Booking List 
+                    var sos = await _dynamoDbContext.LoadAsync<SOS>(update.Id);
+                    // Update Status
+                    sos.Status = update.Status;
+                    sos.Comment = update.Comment;
+                    sos.Updated_Time = GetCurrentEpoch();
+
+                    await _dynamoDbContext.SaveAsync(sos);
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = "SOS Updated !!! ",
+                        StatusCode = 200
+                    };
+                }
+                catch (Exception ex)
+                {
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = ex.Message,
+                        StatusCode = 503
+                    };
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return BadResponse(ex.Message);
+            }
+            return new APIGatewayHttpApiV2ProxyResponse()
+            {
+                Body = "Error",
+                StatusCode = 500
+            };
+        }
+
+            private void InitializeMqttClient()
         {
             // MQTT broker address and port.
             string brokerAddress = "220.247.224.226";
@@ -120,6 +210,22 @@ namespace AWSLambdacommunityapp.Service
 
             // Connect to the MQTT broker.
             _mqttClient.ConnectAsync(options).Wait(); // Wait for the connection to be established.
+        }
+
+        // Get Current Epoch
+        public static int GetCurrentEpoch()
+        {
+            DateTimeOffset epochStart = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+            TimeSpan currentTime = DateTimeOffset.UtcNow - epochStart;
+            return (int)currentTime.TotalSeconds;
+        }
+
+        // Autogenerate ID
+        public string GenerateId()
+        {
+            Guid guid = Guid.NewGuid();
+            string id = guid.ToString();
+            return id;
         }
 
         // Remove 
