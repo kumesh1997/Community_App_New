@@ -1,8 +1,10 @@
 ﻿using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.Model;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using AWSLambdacommunityapp.Dto;
 using AWSLambdacommunityapp.Model;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,12 +49,15 @@ namespace AWSLambdacommunityapp.Service
             }
             else if (httpMethod == "POST" && request.Body != null && request.PathParameters == null)
             {
-                return await HandlePostRequest(request);
-                //return await HandleBookingRequest(request);
+                return await HandleBookingRequest(request);
             }
-            else if (httpMethod == "POST" && request.Body == null && request.PathParameters == null)
+            else if (httpMethod == "GET" && request.Body == null && request.PathParameters == null)
             {
-                return await HandleDailyInitialBookingRequest(request);
+               return await HandleGetBookingListRequest(request);
+            }
+            else if (httpMethod == "PUT" && request.Body != null && request.PathParameters == null)
+            {
+                return await HandleUpdateBookingRequest(request);
             }
 
             // Handle unsupported or unrecognized HTTP methods
@@ -63,7 +68,7 @@ namespace AWSLambdacommunityapp.Service
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandlePostRequest(
            APIGatewayHttpApiV2ProxyRequest request)
         {
-            var amenity = JsonSerializer.Deserialize<AmenitiesDto>(request.Body);
+            var amenity = System.Text.Json.JsonSerializer.Deserialize<AmenitiesDto>(request.Body);
             Amenities newAmenity = new Amenities();
             // Auto Generate ID
             newAmenity.Id = GenerateId();
@@ -75,131 +80,137 @@ namespace AWSLambdacommunityapp.Service
             return OkResponse();
         }
 
-        // Initial Booking for every day
-         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleDailyInitialBookingRequest(
-           APIGatewayHttpApiV2ProxyRequest request)
-         {
-            //var amenityBooking = JsonSerializer.Deserialize<AmenityBooking>(request.Body);
-            // Get all Amenity Types
-            var amenityTypesList = await _dynamoDbContext.ScanAsync<Amenities>(default).GetRemainingAsync();
-            foreach (var item in amenityTypesList)
-            {
-                AmenityBooking amenityBooking = new AmenityBooking();
-                amenityBooking.Id = GenerateId();
-                amenityBooking.BookingCount = 0;
-                amenityBooking.AttendeesList = null;
-                amenityBooking.IsFull = false;
-                amenityBooking.AmenityTypeId = item.Id;
-                amenityBooking.Time = GetCurrentEpochValue();
-                await _dynamoDbContext.SaveAsync(amenityBooking);
-            }
-             return OkResponse();
-         }
+
         // New Booking for a selected date
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleBookingRequest(
            APIGatewayHttpApiV2ProxyRequest request)
         {
-            //request.PathParameters.TryGetValue("Id", out var Id);
-            var amenityBookingDto = JsonSerializer.Deserialize<AmenityBookingDto>(request.Body);
-            var amenityList = await _dynamoDbContext.ScanAsync<Amenities>(default).GetRemainingAsync();
-            var amenityBookingList = await _dynamoDbContext.ScanAsync<AmenityBooking>(default).GetRemainingAsync();
-            var booking = CheckAvailabilityRequest(amenityBookingDto.FromTime, amenityBookingDto.AmenityTypeId, amenityBookingDto.NumberofBookingByTheUser, amenityList, amenityBookingList);
-            if (booking != null)
+            try
             {
-                booking.BookingCount = booking.BookingCount + amenityBookingDto.NumberofBookingByTheUser;
-                //booking.AttendeesList.Add( new AmenityUser(amenityBookingDto.AttendeeId, amenityBookingDto.NumberofBookingByTheUser, amenityBookingDto.FromTime));
-                await _dynamoDbContext.SaveAsync(booking);
+                // Get the Data Comming from Request
+                var amenityBookingDto = System.Text.Json.JsonSerializer.Deserialize<AmenityBookingDto>(request.Body);
+                AmenityBooking amenityBooking = new AmenityBooking();
+                amenityBooking.Id = GenerateId();
+                amenityBooking.AmenityTypeId = amenityBookingDto.AmenityTypeId;
+                amenityBooking.Time = GetCurrentEpoch();
+                amenityBooking.Requested_Time = amenityBookingDto.FromTime;
+                amenityBooking.BookingCount = amenityBookingDto.NumberofBookingByTheUser;
+                amenityBooking.UserId = amenityBookingDto.AttendeeId;
+                amenityBooking.Booking_Status = "opened";
+
+                await _dynamoDbContext.SaveAsync(amenityBooking);
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = "Booking Completed !!!",
+                    StatusCode = 200
+                };
             }
-            else
+            catch (Exception ex)
             {
-                return BadResponse("Booking is not Available");
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = ex.Message,
+                    StatusCode = 503
+                };
             }
-            /*
+            
             return new APIGatewayHttpApiV2ProxyResponse()
             {
-                Body = JsonSerializer.Serialize(amenityBookingDto),
-                StatusCode = 200
+                Body = "Booking Failed !!!",
+                StatusCode = 503
             };
-            */
-
-            return BadResponse(" Bad Request !!!!");
         }
 
-
-            // Check Availability
-            public AmenityBooking CheckAvailabilityRequest(int time, string amenityTypeId, int count, List<Amenities> amenityList, List<AmenityBooking> amenityBookingList)
+        // Get A List of Booking
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetBookingListRequest(
+           APIGatewayHttpApiV2ProxyRequest request)
         {
-            //var amenityList = await _dynamoDbContext.ScanAsync<Amenities>(default).GetRemainingAsync();
-            int amenityCapacity = 0;
-            foreach (var item in amenityList)
+            try
             {
-                if (item.Id == amenityTypeId)
+                var booking_List = await _dynamoDbContext.ScanAsync<AmenityBooking>(default).GetRemainingAsync();
+                // Filter Booking Where Status is not Accepted
+                var filteredList = booking_List.Where(v => v.Booking_Status.ToLower() != "accepted" || v.Booking_Status.ToLower() != "rejected").ToList();
+                if (filteredList != null && filteredList.Count > 0)
                 {
-                    amenityCapacity = item.MaximumCapacityCount;
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = System.Text.Json.JsonSerializer.Serialize(filteredList),
+                        StatusCode = 200
+                    };
                 }
             }
-            // Get the Specific Time slot comming from the user
-            var fromTime = time;
-            var toTime = CalculateNextEpochAfter30Minutes(time);
-            //  Get the Amenity Type ID
-            // Find the specific booking details of that amenity type in that time slot
-            //var amenityBookingList = await _dynamoDbContext.ScanAsync<AmenityBooking>(default).GetRemainingAsync();
-            // Find the booking
-            var booking = FindBookingByTimeRange(amenityBookingList, fromTime, toTime, amenityTypeId);
-            if (booking != null && booking.IsFull != false)
+            catch (Exception ex)
             {
-                if (amenityCapacity < count)
+                return new APIGatewayHttpApiV2ProxyResponse()
                 {
-                    return booking;
-                }
-                else
-                {
-                    return null;
-                }
+                    Body = ex.Message,
+                    StatusCode = 503
+                };
+
             }
-            // return the response
-            return null;
+            return new APIGatewayHttpApiV2ProxyResponse()
+            {
+                Body = "Booking Not Found !!!",
+                StatusCode = 503
+            };
         }
 
-        public AmenityBooking FindBookingByTimeRange(List<AmenityBooking> bookings, int startTime, int endTime, string amenityTypeId)
+        // Update Booking
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUpdateBookingRequest(
+       APIGatewayHttpApiV2ProxyRequest request)
         {
-            // Use LINQ to find the first booking that falls within the time range
-            AmenityBooking matchingBooking = bookings
-                .FirstOrDefault(booking => booking.Time >= startTime && booking.Time <= endTime && booking.AmenityTypeId == amenityTypeId);
-            return matchingBooking;
+            try
+            {
+                // Get the Data Comming from Request
+                var updatedBooking = System.Text.Json.JsonSerializer.Deserialize<UpdateBooking>(request.Body);
+                try
+                {
+                    // Find Booking List 
+                    var booking = await _dynamoDbContext.LoadAsync<AmenityBooking>(updatedBooking.Booking_Id);
+                    // Update Status
+                    booking.Booking_Status = updatedBooking.Status.ToLower();
+                    booking.Updated_Time = GetCurrentEpoch();
+
+                    await _dynamoDbContext.SaveAsync(booking);
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = "Booking Updated !!! ",
+                        StatusCode = 200
+                    };
+                }
+                catch(Exception ex)
+                {
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = "Booking was not Found !!! ",
+                        StatusCode = 503
+                    };
+                }
+                
+
+            }
+            catch (Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = ex.Message,
+                    StatusCode = 503
+                };
+            }
+            return new APIGatewayHttpApiV2ProxyResponse()
+            {
+                Body = "Booking Was Not Updated !!!",
+                StatusCode = 503
+            };
         }
 
-        public static DateTime ConvertEpochToDateTime(int epochValue)
+        // Get Current Epoch
+        public static int GetCurrentEpoch()
         {
-            // Unix epoch starts from January 1, 1970 (UTC)
-            DateTime epochStart = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-
-            // Add the epoch value in seconds to the epoch start time
-            DateTime result = epochStart.AddSeconds(epochValue);
-
-            return result;
+            DateTimeOffset epochStart = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+            TimeSpan currentTime = DateTimeOffset.UtcNow - epochStart;
+            return (int)currentTime.TotalSeconds;
         }
-
-        public static int CalculateNextEpochAfter30Minutes(int currentEpoch)
-        {
-            // Convert the current epoch value to a DateTime object
-            DateTime currentDateTime = DateTimeOffset.FromUnixTimeSeconds(currentEpoch).DateTime;
-
-            // Add 30 minutes to the current time
-            DateTime nextTime = currentDateTime.AddMinutes(30);
-
-            // Convert the next time to Unix timestamp (epoch)
-            int nextEpoch = (int)(nextTime - new DateTime(1970, 1, 1)).TotalSeconds;
-
-            return nextEpoch;
-        }
-
-        private int GetCurrentEpochValue()
-        {
-            // Calculate the epoch value for the current date
-            return (int)new DateTimeOffset(DateTime.UtcNow).ToUnixTimeSeconds();
-        }
-
 
         // Autogenerate ID
         public string GenerateId()

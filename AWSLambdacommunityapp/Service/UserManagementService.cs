@@ -4,6 +4,7 @@ using Amazon.CognitoIdentityProvider.Model;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
 using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using Amazon.Extensions.CognitoAuthentication;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
@@ -76,6 +77,10 @@ namespace AWSLambdacommunityapp.Service
             else if (httpMethod == "GET" && request.Body == null && request.PathParameters == null)
             {
                 return await HandleGetUserListDetailsRequest(request);
+            }
+            else if (httpMethod == "PUT" && request.Body != null && request.PathParameters == null)
+            {
+                return await HandleApproveRequest(request);
             }
             // Handle unsupported or unrecognized HTTP methods
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
@@ -191,7 +196,7 @@ namespace AWSLambdacommunityapp.Service
                 // Perform the scan operation with the filter
                 var userList = await _dynamoDbContext.FromScanAsync<User>(new ScanOperationConfig
                 {
-                    Filter = scanFilter
+                    //Filter = scanFilter
                 }).GetRemainingAsync();
 
                 if (userList != null && userList.Count > 0)
@@ -225,6 +230,56 @@ namespace AWSLambdacommunityapp.Service
                 StatusCode = 400
             };
         }
+
+        // Approve a User, It can be an Admin or a User
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleApproveRequest(APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                var updatedUser = System.Text.Json.JsonSerializer.Deserialize<ApproveUser>(request.Body);
+                // Get Users
+                var table = Table.LoadTable(_amazonDynamoDBClient, "User");
+                var user = await table.GetItemAsync(updatedUser.UserId);
+                if (user != null)
+                {
+                    // Create an UpdateItemRequest to specify the update
+                    var updateRequest = new UpdateItemRequest
+                    {
+                        TableName = "User",
+                        Key = new Dictionary<string, AttributeValue>
+                    {
+                        { "UserId", new AttributeValue { S = updatedUser.UserId } }
+                    },
+                        UpdateExpression = "SET Tower = :Tower, Floor = :Floor, House_Number = :House_Number, Email_Verified = :Email_Verified",
+                        ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                    {
+                        { ":Tower", new AttributeValue { S = updatedUser.Tower } },
+                        { ":Floor", new AttributeValue { S = updatedUser.Floor } },
+                        { ":House_Number", new AttributeValue { S = updatedUser.House_Number } },
+                        { ":Email_Verified", new AttributeValue {  N = "1" } }
+                    }
+                     };
+
+                    // Perform the update operation
+                    await _amazonDynamoDBClient.UpdateItemAsync(updateRequest);
+
+                    return new APIGatewayHttpApiV2ProxyResponse
+                    {
+                        StatusCode = 200,
+                        Body = "User updated successfully."
+                    };
+                }
+                else
+                {
+                    return BadResponse("Invalid request, User was no Updated !!!");
+                }
+            }
+            catch(Exception ex)
+            {
+                return BadResponse(ex.Message);
+            }
+        }
+
 
             private string CalculateSecretHash(string clientId, string clientSecret, string username)
         {

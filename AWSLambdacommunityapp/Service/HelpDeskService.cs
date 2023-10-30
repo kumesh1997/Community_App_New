@@ -157,7 +157,7 @@ namespace AWSLambdacommunityapp.Service
                 //var visitor = await _dynamoDbContext.LoadAsync<Visitor>(Id);
                 // Filter the Visitors List Based on User Id
                 var helpdesk = await _dynamoDbContext.ScanAsync<HelpDesk>(default).GetRemainingAsync();
-                var filteredHelpDesk = helpdesk.Where(v => v.UserId == Id).ToList();
+                var filteredHelpDesk = helpdesk.Where(v => v.UserId == Id && v.Status.ToLower() != "done").ToList();
                 if (filteredHelpDesk != null)
                 {
                     return new APIGatewayHttpApiV2ProxyResponse()
@@ -167,7 +167,7 @@ namespace AWSLambdacommunityapp.Service
                     };
                 }
             }
-            return BadResponse("Visitor Not Found !!!");
+            return BadResponse("Help Desk Not Found !!!");
         }
 
 

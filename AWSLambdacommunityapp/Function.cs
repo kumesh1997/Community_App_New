@@ -32,7 +32,8 @@ public class Function
     private readonly UserAuthentication authentication;
     // Reference For User Sign In Service
     private readonly SignInService signInService;
-
+    // Reference For Event Service
+    private readonly EventServices eventServices;
     public Function()
     {
         // New Help Desk Service Instance
@@ -64,6 +65,9 @@ public class Function
 
         // New User Sign In Service Instnace
         signInService = new SignInService();
+
+        // New Event Service Instance
+        eventServices = new EventServices();
     }
 
    public async Task<APIGatewayHttpApiV2ProxyResponse> HelpDeskHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
@@ -115,5 +119,10 @@ public class Function
     public async Task<APIGatewayHttpApiV2ProxyResponse> SignInHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
     {
         return await signInService.SignInFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> EventHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await eventServices.EventFunctionHandler(request, context);
     }
 }
