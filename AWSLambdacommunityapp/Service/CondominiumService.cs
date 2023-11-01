@@ -65,7 +65,26 @@ namespace AWSLambdacommunityapp.Service
             var condo = JsonSerializer.Deserialize<Condominium>(request.Body);
             try
             {
-                condo.Condominium_Id = GenerateCondoId();
+                var condo_List = await _dynamoDbContext.ScanAsync<Condominium>(default).GetRemainingAsync();
+                if (condo_List.Count == 0 || condo_List.Count > 0 || condo_List == null)
+                {
+                    foreach(var i in condo_List)
+                    {
+                        if (i.Condominium_Description.ToLower() != condo.Condominium_Description.ToLower())
+                        {
+                            condo.Condominium_Id = GenerateUniqueCondoId();
+                            condo.Is_Delete = false;
+                            await _dynamoDbContext.SaveAsync(condo);
+                            return OkResponse();
+                        }
+                        else
+                        {
+                            return BadResponse("Condo Name Can't Duplicated !!! ");
+                        }
+                    }
+                    
+                }
+                condo.Condominium_Id = GenerateUniqueCondoId();
                 condo.Is_Delete = false;
                 await _dynamoDbContext.SaveAsync(condo);
                 return OkResponse();
@@ -137,6 +156,21 @@ namespace AWSLambdacommunityapp.Service
 
             // Increment the nextId for the next ID
             nextId++;
+
+            return condoId;
+        }
+
+        public string GenerateUniqueCondoId()
+        {
+            // Use a timestamp as a base for uniqueness
+            long timestamp = DateTime.UtcNow.Ticks;
+
+            // Generate a random portion (you can use a random number generator)
+            Random random = new Random();
+            int randomPart = random.Next(10000); // Adjust the range as needed
+
+            // Combine timestamp and random portion to create the condoId
+            string condoId = "CONDO" + timestamp.ToString() + randomPart.ToString("D4");
 
             return condoId;
         }
