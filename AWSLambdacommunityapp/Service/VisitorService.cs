@@ -59,7 +59,7 @@ namespace AWSLambdacommunityapp.Service
             {
                 return await HandleGetVisitorListBetweenTwoDaysRequest(request);
             }
-            else if (httpMethod == "POST")
+            else if (httpMethod == "POST" && request.Body != null && request.PathParameters == null)
             {
                 return await HandlePostRequest(request);
             }
@@ -67,7 +67,7 @@ namespace AWSLambdacommunityapp.Service
             {
                 return await HandleDeleteRequest(request);
             }
-            else if (httpMethod == "PUT")
+            else if (httpMethod == "PUT" && request.Body != null && request.PathParameters == null)
             {
                 return await HandleUpdateRequest(request);
             }
@@ -83,6 +83,7 @@ namespace AWSLambdacommunityapp.Service
             var visitor = JsonSerializer.Deserialize<Visitor>(request.Body);
             // Auto Generate ID
             visitor.Id = GenerateId();
+            visitor.IsApproved = "pending";
             await _dynamoDbContext.SaveAsync(visitor);
             return OkResponse();
         }
@@ -118,14 +119,14 @@ namespace AWSLambdacommunityapp.Service
         // Update Visitor
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUpdateRequest(APIGatewayHttpApiV2ProxyRequest request)
         {
-            var user = JsonSerializer.Deserialize<Visitor>(request.Body);
-            if (user != null)
+            var visitor = JsonSerializer.Deserialize<UpdateVisitorDto>(request.Body);
+            if (visitor != null)
             {
-                var existingUser = await _dynamoDbContext.LoadAsync<Visitor>(user.Id);
-                if (existingUser != null)
+                var existingVisitor = await _dynamoDbContext.LoadAsync<Visitor>(visitor.Id);
+                if (existingVisitor != null)
                 {
-                    existingUser.Name = user.Name;
-                    await _dynamoDbContext.SaveAsync(user);
+                    existingVisitor.IsApproved = visitor.IsApproved.ToLower();
+                    await _dynamoDbContext.SaveAsync(existingVisitor);
                     return OkResponse();
                 }
             }

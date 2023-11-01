@@ -45,7 +45,7 @@ namespace AWSLambdacommunityapp.Service
                 };
             }
 
-            if (httpMethod == "GET" && request.Body != null && request.PathParameters == null)
+            if (httpMethod == "POST" && request.Body != null && request.PathParameters == null)
             {
                 return await HandleGetListRequest(request);
             }

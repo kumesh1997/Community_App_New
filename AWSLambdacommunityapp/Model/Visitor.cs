@@ -17,6 +17,6 @@ namespace AWSLambdacommunityapp.Model
         public int To { get; set; }
         public string Purpose { get; set; }
         public string UserId { get; set; }
-        public bool IsApproved { get; set; } = false;
+        public string IsApproved { get; set; }
     }
 }
