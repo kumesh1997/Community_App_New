@@ -84,6 +84,7 @@ namespace AWSLambdacommunityapp.Service
                 newEvent.Id = GenerateId();
                 newEvent.Date = ev.Date;
                 newEvent.Time = ev.Time;
+                newEvent.Location = ev.Location;
                 newEvent.DateTime = GetCurrentEpoch();
                 newEvent.Image = _bucketService.UploadImageAndGetUrl(ev.Image64Base, ev.ImageName);
                 if (newEvent == null)

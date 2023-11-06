@@ -280,6 +280,7 @@ namespace AWSLambdacommunityapp.Service
             }
         }
 
+        // Update User
 
             private string CalculateSecretHash(string clientId, string clientSecret, string username)
         {

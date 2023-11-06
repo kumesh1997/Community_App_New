@@ -55,6 +55,10 @@ namespace AWSLambdacommunityapp.Service
             {
                return await HandleGetBookingListRequest(request);
             }
+            else if (httpMethod == "GET" && request.Body == null && request.PathParameters != null)
+            {
+                return await HandleGetAmenityListRequest(request);
+            }
             else if (httpMethod == "PUT" && request.Body != null && request.PathParameters == null)
             {
                 return await HandleUpdateBookingRequest(request);
@@ -204,8 +208,34 @@ namespace AWSLambdacommunityapp.Service
             };
         }
 
-        // Get Current Epoch
-        public static int GetCurrentEpoch()
+        // Get Amenity List
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetAmenityListRequest(
+      APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                // get the parameter value
+                request.PathParameters.TryGetValue("Id", out var Id);
+                // Get Amenity List of Particular Condo
+                //var Amenity_List = await _dynamoDbContext.LoadAsync<Amenities>(Id);
+                var visitor = await _dynamoDbContext.ScanAsync<Amenities>(default).GetRemainingAsync();
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = System.Text.Json.JsonSerializer.Serialize(visitor),
+                    StatusCode = 200
+                };
+            }
+            catch(Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = ex.Message,
+                    StatusCode = 503
+                };
+            }
+        }
+            // Get Current Epoch
+            public static int GetCurrentEpoch()
         {
             DateTimeOffset epochStart = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
             TimeSpan currentTime = DateTimeOffset.UtcNow - epochStart;

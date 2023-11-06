@@ -25,6 +25,7 @@ namespace AWSLambdacommunityapp.Model
         public string Phone_Number { get; set; }
         public bool Email_Verified { get; set; }
         public bool Is_Admin { get; set; }
+        public bool Is_Condo_Admin { get; set; }
         public string Condominum_Id { get; set; }
     }
 

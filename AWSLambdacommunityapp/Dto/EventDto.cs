@@ -12,5 +12,6 @@ namespace AWSLambdacommunityapp.Dto
         public string Time { get; set; }
         public string ImageName { get; set; }
         public string Image64Base { get; set; }
+        public string Location { get; set; }
     }
 }

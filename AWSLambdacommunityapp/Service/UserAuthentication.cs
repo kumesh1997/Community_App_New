@@ -3,6 +3,8 @@ using Amazon.CognitoIdentityProvider;
 using Amazon.CognitoIdentityProvider.Model;
 using Amazon.DynamoDBv2;
 using Amazon.DynamoDBv2.DataModel;
+using Amazon.DynamoDBv2.DocumentModel;
+using Amazon.DynamoDBv2.Model;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using AWSLambdacommunityapp.Dto;
@@ -67,6 +69,14 @@ namespace AWSLambdacommunityapp.Service
             else if (httpMethod == "GET" && request.Body == null && request.PathParameters == null)
             {
                 return await GetNewAccessToken(request);
+            }
+            else if (httpMethod == "GET" && request.Body == null && request.PathParameters != null)
+            {
+                return await FogetPasswordHandler(request);
+            }
+            else if (httpMethod == "POST" && request.Body != null && request.PathParameters != null)
+            {
+                return await ResetPasswordHandler(request);
             }
             // Handle unsupported or unrecognized HTTP methods
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
@@ -215,6 +225,110 @@ namespace AWSLambdacommunityapp.Service
                 {
                     StatusCode = 500,
                     Body = "Error generating new tokens: " + ex.Message,
+                };
+            }
+        }
+
+        // Forget Password
+        private async Task<APIGatewayHttpApiV2ProxyResponse> FogetPasswordHandler(
+        APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                // get the parameter value
+                request.PathParameters.TryGetValue("Id", out var Id);
+                var forgotPasswordRequest = new ForgotPasswordRequest
+                {
+                    ClientId = _clientId,
+                    Username = Id
+                };
+
+                var forgotPasswordResponse = await _cognitoClient.ForgotPasswordAsync(forgotPasswordRequest);
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 200,
+                    Body = $"Password reset code sent to the {Id} email.",
+                };
+
+            }
+            catch (Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 405,
+                    Body = ex.Message,
+                };
+            }
+        }
+
+        // Reset Password
+        private async Task<APIGatewayHttpApiV2ProxyResponse> ResetPasswordHandler(
+        APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                // Request Body
+                var reste_pw = JsonSerializer.Deserialize<ResetPasswordDto>(request.Body);
+                // get the parameter value
+                request.PathParameters.TryGetValue("Id", out var Id);
+                var confirmForgotPasswordRequest = new ConfirmForgotPasswordRequest
+                {
+                    ClientId = _clientId,
+                    Username = Id.ToString(),
+                    ConfirmationCode = reste_pw.Code.ToString(),
+                    Password = reste_pw.Password.ToString()
+                };
+
+                // Update Password in Database
+                try
+                {
+                    // Get Users
+                    var table = Table.LoadTable(_amazonDynamoDBClient, "User");
+                    var user = await table.GetItemAsync(Id);
+                    if (user != null)
+                    {
+                        // Create an UpdateItemRequest to specify the update
+                        var updateRequest = new UpdateItemRequest
+                        {
+                            TableName = "User",
+                            Key = new Dictionary<string, AttributeValue>
+                    {
+                        { "UserId", new AttributeValue { S = Id.ToString() } }
+                    },
+                            UpdateExpression = "SET Password = :Password",
+                            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                    {
+                        { ":Password", new AttributeValue { S = reste_pw.Password } },
+                    }
+                        };
+
+                        // Perform the update operation in User Table
+                        await _amazonDynamoDBClient.UpdateItemAsync(updateRequest);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return new APIGatewayHttpApiV2ProxyResponse
+                    {
+                        StatusCode = 402,
+                        Body = ex.Message,
+                    };
+                }
+                // Reset Password
+                await _cognitoClient.ConfirmForgotPasswordAsync(confirmForgotPasswordRequest);
+
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 200,
+                    Body = "Password reset successful.",
+                };
+            }
+            catch(Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse
+                {
+                    StatusCode = 405,
+                    Body = ex.Message,
                 };
             }
         }

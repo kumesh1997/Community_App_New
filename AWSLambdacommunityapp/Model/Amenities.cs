@@ -17,5 +17,7 @@ namespace AWSLambdacommunityapp.Model
 
         public int MaximumCapacityCount { get; set; }
         public string AmenityLocation { get; set; }
+
+        public string Condo_ID { get; set; }
     }
 }

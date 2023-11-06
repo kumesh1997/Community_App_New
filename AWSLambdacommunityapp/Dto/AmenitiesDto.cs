@@ -14,5 +14,6 @@ namespace AWSLambdacommunityapp.Dto
         public string AmenityLocation { get; set; }
         public string Image64Base { get; set; }
         public string ImageName { get; set; }
+        public string Condo_Id { get; set; }
     }
 }

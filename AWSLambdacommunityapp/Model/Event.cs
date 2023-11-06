@@ -17,5 +17,7 @@ namespace AWSLambdacommunityapp.Model
 
         public string Image { get; set; }
 
+        public string Location { get; set; }
+
     }
 }

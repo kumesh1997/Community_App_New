@@ -34,6 +34,8 @@ public class Function
     private readonly SignInService signInService;
     // Reference For Event Service
     private readonly EventServices eventServices;
+    // Reference For Amenity Type Service
+    private readonly AmenityTypeService amenityTypeService;
     public Function()
     {
         // New Help Desk Service Instance
@@ -68,6 +70,9 @@ public class Function
 
         // New Event Service Instance
         eventServices = new EventServices();
+
+        // New Amenity Type Service Instance
+        amenityTypeService = new AmenityTypeService();
     }
 
    public async Task<APIGatewayHttpApiV2ProxyResponse> HelpDeskHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
@@ -124,5 +129,10 @@ public class Function
     public async Task<APIGatewayHttpApiV2ProxyResponse> EventHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
     {
         return await eventServices.EventFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> AmenityTypeHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await amenityTypeService.AmenityTypeFunctionHandler(request, context);
     }
 }
