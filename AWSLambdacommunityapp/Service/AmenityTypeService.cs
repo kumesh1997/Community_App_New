@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace AWSLambdacommunityapp.Service
@@ -37,7 +38,11 @@ namespace AWSLambdacommunityapp.Service
             {        
                 return await HandlePostRequest(request);
             }
-            
+            if (httpMethod == "GET" && request.Body == null && request.PathParameters != null)
+            {
+                return await HandleGetRequest(request);
+            }
+
 
             // Handle unsupported or unrecognized HTTP methods
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
@@ -60,8 +65,43 @@ namespace AWSLambdacommunityapp.Service
             return OkResponse();
         }
 
-        // Autogenerate ID
-        public string GenerateId()
+
+        // Get List of Amenities of a Condomenium
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetRequest(
+           APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                // Get Respected Condo ID
+                request.PathParameters.TryGetValue("Id", out var Id);
+                var amenityList = await _dynamoDbContext.ScanAsync<Amenities>(default).GetRemainingAsync();
+                var filteredList = amenityList.Where(v => v.Condo_ID == Id).ToList();
+                if (filteredList != null && filteredList.Count > 0)
+                {
+                    return new APIGatewayHttpApiV2ProxyResponse()
+                    {
+                        Body = JsonSerializer.Serialize(filteredList),
+                        StatusCode = 200
+                    };
+                }
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = "Condomenium Not Found !!!",
+                    StatusCode = 403
+                };
+            }
+            catch (Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = "Error: " + ex.Message,
+                    StatusCode = 500
+                };
+            }
+        }
+
+            // Autogenerate ID
+            public string GenerateId()
         {
             Guid guid = Guid.NewGuid();
             string id = guid.ToString();

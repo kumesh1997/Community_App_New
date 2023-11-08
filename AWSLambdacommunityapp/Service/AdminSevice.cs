@@ -108,7 +108,7 @@ namespace AWSLambdacommunityapp.Service
                             StatusCode = 400
                         };
                     }
-                    if (userDto.Is_Super_Admin == true && userDto.policyList != null)
+                    if (userDto.Is_Super_Admin == true && userDto.policyList != null && userDto.Is_Condo_Admin != true)
                     {
                         document["UserId"] = userDto.UserId;
                         document["Password"] = userDto.Password;
@@ -118,8 +118,11 @@ namespace AWSLambdacommunityapp.Service
                         document["Floor"] = userDto.Floor;
                         document["House_Number"] = userDto.House_Number;
                         document["Is_Super_Admin"] = true;
+                        document["Is_Admin"] = false;
+                        document["Is_Condo_Admin"] = false;
                         document["Phone_Number"] = userDto.Phone_Number;
                         document["Email_Verified"] = true;
+                        document["Is_Editable"] = userDto.Is_Editable? true : false;
                         document["Condominum_Id"] = userDto.Condominium_ID;
                         foreach (var policy in userDto.policyList)
                             {
@@ -129,7 +132,7 @@ namespace AWSLambdacommunityapp.Service
                                 }
                             }
 
-                    }else if (userDto.policyList != null && userDto.Is_Super_Admin != true)
+                    }else if (userDto.policyList != null && userDto.Is_Super_Admin != true && userDto.Is_Condo_Admin != true)
                     {
                         document["UserId"] = userDto.UserId;
                         document["Password"] = userDto.Password;
@@ -142,6 +145,34 @@ namespace AWSLambdacommunityapp.Service
                         document["Phone_Number"] = userDto.Phone_Number;
                         document["Email_Verified"] = true;
                         document["Is_Admin"] = true;
+                        document["Is_Condo_Admin"] = false;
+                        document["Is_Editable"] = userDto.Is_Editable ? true : false;
+                        document["Condominum_Id"] = userDto.Condominium_ID;
+                        if (userDto.policyList != null)
+                        {
+                            foreach (var policy in userDto.policyList)
+                            {
+                                foreach (var kvp in policy)
+                                {
+                                    document[kvp.Key] = kvp.Value;
+                                }
+                            }
+                        }
+                    }
+                    else if (userDto.policyList != null && userDto.Is_Condo_Admin == true && userDto.Is_Super_Admin == false)
+                    {
+                        document["UserId"] = userDto.UserId;
+                        document["Password"] = userDto.Password;
+                        document["FullName"] = userDto.FullName;
+                        document["NIC"] = userDto.NIC;
+                        document["Tower"] = userDto.Tower;
+                        document["Floor"] = userDto.Floor;
+                        document["House_Number"] = userDto.House_Number;
+                        document["Is_Super_Admin"] = false;
+                        document["Phone_Number"] = userDto.Phone_Number;
+                        document["Email_Verified"] = true;
+                        document["Is_Condo_Admin"] = true;
+                        document["Is_Editable"] = userDto.Is_Editable ? true : false;
                         document["Condominum_Id"] = userDto.Condominium_ID;
                         if (userDto.policyList != null)
                         {

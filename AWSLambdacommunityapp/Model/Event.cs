@@ -12,6 +12,8 @@ namespace AWSLambdacommunityapp.Model
         public string Id { get; set; }
         public string Date { get; set; }
         public string Time { get; set; }
+        public string EventName { get; set; }
+        public string EventDescription { get; set; }
         public int DateTime { get; set; }
         public bool IsVisible { get; set; }
 

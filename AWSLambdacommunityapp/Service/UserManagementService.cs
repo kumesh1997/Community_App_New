@@ -130,6 +130,7 @@ namespace AWSLambdacommunityapp.Service
                     document["Phone_Number"] = userDto.Phone_Number;
                     document["Email_Verified"] = false;
                     document["Is_Admin"] = false;
+                    document["Is_Editable"] = false;
                     document["Condominum_Id"] = userDto.Condominium_ID;
 
                 var table = Table.LoadTable(_amazonDynamoDBClient, "User");

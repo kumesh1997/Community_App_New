@@ -13,10 +13,15 @@ namespace AWSLambdacommunityapp.Model
         public int BookingCount { get; set; }
         public int Time { get; set; }
 
-        public int Requested_Time { get; set; }
+        public int Requested_Time_From { get; set; }
+        public int Requested_Time_To { get; set; }
         public  string Booking_Status { get; set; }
         public string UserId { get; set; }
 
         public int Updated_Time { get; set; }
+        public string Tower { get; set; }
+        public string Floor { get; set; }
+        public string House_Number { get; set; }
+
     }
 }

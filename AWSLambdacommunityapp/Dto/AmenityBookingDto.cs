@@ -13,6 +13,10 @@ namespace AWSLambdacommunityapp.Dto
         public int NumberofBookingByTheUser { get; set; }
 
         public int FromTime { get; set; }
+        public int ToTime { get; set; }
+        public string Tower { get; set; }
+        public string Floor { get; set; }
+        public string House_Number { get; set; }
 
     }
 }
