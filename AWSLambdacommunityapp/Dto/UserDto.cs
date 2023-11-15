@@ -17,9 +17,10 @@ namespace AWSLambdacommunityapp.Dto
         public string House_Number { get; set; }
         public bool Is_Super_Admin { get; set; }
         public bool Is_Condo_Admin { get; set; }
+        public bool Is_Admin { get; set; }
         public string Phone_Number { get; set; }
         public bool Email_Verified { get; set; }
-
+        public string Module_ID { get; set; }
         public bool Is_Editable { get; set; }
         public string Condominium_ID { get; set; }
 

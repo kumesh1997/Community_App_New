@@ -53,7 +53,8 @@ namespace AWSLambdacommunityapp.Service
                     {
                         BucketName = _bucketName,
                         Key = fileName,
-                        Expires = DateTime.Now.AddYears(5) // The link will expire in 24 hours, you can adjust the expiration time as needed.
+                        Expires = DateTime.UtcNow.AddYears(5)
+                        // The link will expire in 24 hours, you can adjust the expiration time as needed.
                     });
                 }
             }

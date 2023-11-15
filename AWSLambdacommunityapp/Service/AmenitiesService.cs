@@ -80,7 +80,7 @@ namespace AWSLambdacommunityapp.Service
                 amenityBooking.Floor = amenityBookingDto.Floor;
                 amenityBooking.House_Number = amenityBookingDto.House_Number;
                 amenityBooking.Requested_Time_From = amenityBookingDto.FromTime;
-                amenityBooking.Requested_Time_To = amenityBookingDto.ToTime;
+                amenityBooking.Booking_Date = amenityBookingDto.Booking_Date;
                 amenityBooking.BookingCount = amenityBookingDto.NumberofBookingByTheUser;
                 amenityBooking.UserId = amenityBookingDto.AttendeeId;
                 amenityBooking.Booking_Status = "opened";

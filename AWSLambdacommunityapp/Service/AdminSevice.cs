@@ -108,7 +108,7 @@ namespace AWSLambdacommunityapp.Service
                             StatusCode = 400
                         };
                     }
-                    if (userDto.Is_Super_Admin == true && userDto.policyList != null && userDto.Is_Condo_Admin != true)
+                    if (userDto.policyList != null)
                     {
                         document["UserId"] = userDto.UserId;
                         document["Password"] = userDto.Password;
@@ -117,13 +117,15 @@ namespace AWSLambdacommunityapp.Service
                         document["Tower"] = userDto.Tower;
                         document["Floor"] = userDto.Floor;
                         document["House_Number"] = userDto.House_Number;
-                        document["Is_Super_Admin"] = true;
-                        document["Is_Admin"] = false;
-                        document["Is_Condo_Admin"] = false;
+                        document["Is_Super_Admin"] = userDto.Is_Super_Admin;
+                        document["Is_Admin"] = userDto.Is_Admin;
+                        document["Is_Condo_Admin"] = userDto.Is_Condo_Admin;
                         document["Phone_Number"] = userDto.Phone_Number;
                         document["Email_Verified"] = true;
                         document["Is_Editable"] = userDto.Is_Editable? true : false;
                         document["Condominum_Id"] = userDto.Condominium_ID;
+                        document["Module_ID"] = userDto.Module_ID;
+
                         foreach (var policy in userDto.policyList)
                             {
                                 foreach (var kvp in policy)
@@ -132,58 +134,6 @@ namespace AWSLambdacommunityapp.Service
                                 }
                             }
 
-                    }else if (userDto.policyList != null && userDto.Is_Super_Admin != true && userDto.Is_Condo_Admin != true)
-                    {
-                        document["UserId"] = userDto.UserId;
-                        document["Password"] = userDto.Password;
-                        document["FullName"] = userDto.FullName;
-                        document["NIC"] = userDto.NIC;
-                        document["Tower"] = userDto.Tower;
-                        document["Floor"] = userDto.Floor;
-                        document["House_Number"] = userDto.House_Number;
-                        document["Is_Super_Admin"] = false;
-                        document["Phone_Number"] = userDto.Phone_Number;
-                        document["Email_Verified"] = true;
-                        document["Is_Admin"] = true;
-                        document["Is_Condo_Admin"] = false;
-                        document["Is_Editable"] = userDto.Is_Editable ? true : false;
-                        document["Condominum_Id"] = userDto.Condominium_ID;
-                        if (userDto.policyList != null)
-                        {
-                            foreach (var policy in userDto.policyList)
-                            {
-                                foreach (var kvp in policy)
-                                {
-                                    document[kvp.Key] = kvp.Value;
-                                }
-                            }
-                        }
-                    }
-                    else if (userDto.policyList != null && userDto.Is_Condo_Admin == true && userDto.Is_Super_Admin == false)
-                    {
-                        document["UserId"] = userDto.UserId;
-                        document["Password"] = userDto.Password;
-                        document["FullName"] = userDto.FullName;
-                        document["NIC"] = userDto.NIC;
-                        document["Tower"] = userDto.Tower;
-                        document["Floor"] = userDto.Floor;
-                        document["House_Number"] = userDto.House_Number;
-                        document["Is_Super_Admin"] = false;
-                        document["Phone_Number"] = userDto.Phone_Number;
-                        document["Email_Verified"] = true;
-                        document["Is_Condo_Admin"] = true;
-                        document["Is_Editable"] = userDto.Is_Editable ? true : false;
-                        document["Condominum_Id"] = userDto.Condominium_ID;
-                        if (userDto.policyList != null)
-                        {
-                            foreach (var policy in userDto.policyList)
-                            {
-                                foreach (var kvp in policy)
-                                {
-                                    document[kvp.Key] = kvp.Value;
-                                }
-                            }
-                        }
                     }
                     //await _dynamoDbContext.SaveAsync(document);
                     var table = Table.LoadTable(_amazonDynamoDBClient, "User");
@@ -220,69 +170,36 @@ namespace AWSLambdacommunityapp.Service
 
                 if (user != null)
                 {
-                    var updateExpression = "SET";
-                    var expressionAttributeValues = new Dictionary<string, AttributeValue>();
-
-                    if (updatedUser.policyList != null)
+                    // Create an UpdateItemRequest to specify the update
+                    var updateRequest = new UpdateItemRequest
                     {
-                        var document = new Document();
-                        foreach (var attribute in updatedUser.policyList)
-                        {
-                            foreach (var item in attribute)
-                            {
-                                // Add the attribute to the update expression and expression attribute values
-                                string attributeName = item.Key;
-                                if (user.ContainsKey(attributeName))
-                                {
-                                    updateExpression += $" {attributeName} = :{attributeName},";
-                                    expressionAttributeValues[$":{attributeName}"] = new AttributeValue { N = "1" };
-                                }
-                                else
-                                {
-                                    // If the attribute doesn't exist, create it with a value of 1
-                                    updateExpression += $" {attributeName} = :{attributeName},";
-                                    expressionAttributeValues[$":{attributeName}"] = new AttributeValue { N = "1" };
-
-                                    // Add the new attribute to the user's data
-                                    user[attributeName] = 1;
-                                }
-                            }
-
-                        }
-
-                        // Remove the trailing comma from the update expression
-                        updateExpression = updateExpression.TrimEnd(',');
-
-                        // Create an UpdateItemRequest to specify the update
-                        var updateRequest = new UpdateItemRequest
-                        {
-                            TableName = "User",
-                            Key = new Dictionary<string, AttributeValue>
-                        {
-                            { "UserId", new AttributeValue { S = updatedUser.UserId } }
-                        },
-                            UpdateExpression = updateExpression,
-                            ExpressionAttributeValues = expressionAttributeValues
-                        };
-
-                        // Perform the update operation
-                        await _amazonDynamoDBClient.UpdateItemAsync(updateRequest);
-
-                        return new APIGatewayHttpApiV2ProxyResponse
-                        {
-                            StatusCode = 200,
-                            Body = "User attributes updated successfully."
-                        };
-                    }
-                    else
+                        TableName = "User",
+                        Key = new Dictionary<string, AttributeValue>
                     {
-                        return BadResponse("Invalid request. 'AttributesToUpdate' is missing or empty in the request body.");
+                        { "UserId", new AttributeValue { S = updatedUser.UserId } }
+                    },
+                        UpdateExpression = "SET Module_ID = :Module_ID, Is_Editable = :Is_Editable",
+                        ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+                    {
+                        { ":Module_ID", new AttributeValue { S = updatedUser.Module_Id } },
+                        { ":Is_Editable", new AttributeValue {  N = updatedUser.Is_Edit? "1" : "0" } }
                     }
+                    };
+
+                    // Perform the update operation
+                    await _amazonDynamoDBClient.UpdateItemAsync(updateRequest);
+
+                    return new APIGatewayHttpApiV2ProxyResponse
+                    {
+                        StatusCode = 200,
+                        Body = "User updated successfully."
+                    };
                 }
                 else
                 {
-                    return BadResponse("User not found for the provided UserId.");
+                    return BadResponse("User was Not Updated !!! ");
                 }
+
             }
             catch (Exception ex)
             {
