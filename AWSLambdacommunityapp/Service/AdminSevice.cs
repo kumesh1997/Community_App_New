@@ -66,9 +66,13 @@ namespace AWSLambdacommunityapp.Service
             {
                 return await HandleAdminRegistrationRequest(request);
             }
+            //else if (httpMethod == "PUT" && request.Body != null && request.PathParameters == null)
+            //{
+            //    return await HandleUpdateAdminRequest(request);
+            //}
             else if (httpMethod == "PUT" && request.Body != null && request.PathParameters == null)
             {
-                return await HandleUpdateAdminRequest(request);
+                return await HandleUpdatePolicyListRequest(request);
             }
             // Handle unsupported or unrecognized HTTP methods
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
@@ -125,6 +129,7 @@ namespace AWSLambdacommunityapp.Service
                         document["Is_Editable"] = userDto.Is_Editable? true : false;
                         document["Condominum_Id"] = userDto.Condominium_ID;
                         document["Module_ID"] = userDto.Module_ID;
+                        document["Time_Stamp"] = GetCurrentEpochTime();
 
                         foreach (var policy in userDto.policyList)
                             {
@@ -210,9 +215,132 @@ namespace AWSLambdacommunityapp.Service
                 };
             }
         }
+        // Update Policy
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUpdatePolicyListRequest(
+           APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                var updatedUser = System.Text.Json.JsonSerializer.Deserialize<UpdatePolicyList>(request.Body);
+                if (string.IsNullOrWhiteSpace(updatedUser.UserId))
+                {
+                    return BadResponse("Invalid request. 'UserId' is required in the request body.");
+                }
 
-            // OK Response
-            private static APIGatewayHttpApiV2ProxyResponse OkResponse() =>
+                // Get Users
+                var table = Table.LoadTable(_amazonDynamoDBClient, "User");
+                var user = await table.GetItemAsync(updatedUser.UserId);
+
+                if (user != null)
+                {
+                    var updateExpression = "SET";
+                    var expressionAttributeValues = new Dictionary<string, AttributeValue>();
+
+                    if (updatedUser.Module_Id != null && updatedUser.Is_Edit != null)
+                    {
+                        updateExpression += " Module_ID = :Module_ID, Is_Editable = :Is_Editable,";
+                        expressionAttributeValues[":Module_ID"] = new AttributeValue { S = updatedUser.Module_Id.ToString() };
+                        expressionAttributeValues[":Is_Editable"] = new AttributeValue { N = updatedUser.Is_Edit ? "1" : "0" };
+                    }else if (updatedUser.Module_Id != null && updatedUser.Is_Edit == null)
+                    {
+                        updateExpression += " Module_ID = :Module_ID,";
+                        expressionAttributeValues[":Module_ID"] = new AttributeValue { S = updatedUser.Module_Id.ToString() };
+                    }else if (updatedUser.Module_Id == null && updatedUser.Is_Edit != null)
+                    {
+                        updateExpression += " Is_Editable = :Is_Editable,";
+                        expressionAttributeValues[":Is_Editable"] = new AttributeValue { N = updatedUser.Is_Edit ? "1" : "0" };
+                    }
+
+
+                    if (updatedUser.policyList != null)
+                    {
+                        var document = new Document();
+                        foreach (var attribute in updatedUser.policyList)
+                        {
+                            foreach (var item in attribute)
+                            {
+                                // Add the attribute to the update expression and expression attribute values
+                                string attributeName = item.Key;
+                                if (user.ContainsKey(attributeName))
+                                {
+                                    updateExpression += $" {attributeName} = :{attributeName},";
+                                    expressionAttributeValues[$":{attributeName}"] = new AttributeValue { N = item.Value? "1" : "0"};
+                                }
+                                else
+                                {
+                                    // If the attribute doesn't exist, create it with a value of 1
+                                    updateExpression += $" {attributeName} = :{attributeName},";
+                                    expressionAttributeValues[$":{attributeName}"] = new AttributeValue { N = item.Value? "1" : "0" };
+
+                                    // Add the new attribute to the user's data
+                                    user[attributeName] = 1;
+                                }
+                            }
+
+                        }
+
+                        // Remove the trailing comma from the update expression
+                        updateExpression = updateExpression.TrimEnd(',');
+
+                        // Create an UpdateItemRequest to specify the update
+                        var updateRequest = new UpdateItemRequest
+                        {
+                            TableName = "User",
+                            Key = new Dictionary<string, AttributeValue>
+                        {
+                            { "UserId", new AttributeValue { S = updatedUser.UserId } }
+                        },
+                            UpdateExpression = updateExpression,
+                            ExpressionAttributeValues = expressionAttributeValues
+                        };
+
+                        // Perform the update operation
+                        await _amazonDynamoDBClient.UpdateItemAsync(updateRequest);
+
+                        return new APIGatewayHttpApiV2ProxyResponse
+                        {
+                            StatusCode = 200,
+                            Body = "User attributes updated successfully."
+                        };
+                    }
+                    else
+                    {
+                        return BadResponse("Invalid request. 'AttributesToUpdate' is missing or empty in the request body.");
+                    }
+                }
+                else
+                {
+                    return BadResponse("User not found for the provided UserId.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = "Error: " + ex.Message,
+                    StatusCode = 500
+                };
+            }
+        }
+
+            // Get Current Time
+            public static string GetCurrentEpochTime()
+        {
+            // Get the current date and time in UTC
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+
+            // Calculate the seconds since Unix epoch
+            long epochSeconds = now.ToUnixTimeSeconds();
+
+            // Convert the epoch value to a string
+            string epochTimeString = epochSeconds.ToString();
+
+            return epochTimeString;
+        }
+
+
+        // OK Response
+        private static APIGatewayHttpApiV2ProxyResponse OkResponse() =>
             new APIGatewayHttpApiV2ProxyResponse()
             {
                 StatusCode = 200

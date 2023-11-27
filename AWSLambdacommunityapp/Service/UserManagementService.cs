@@ -132,6 +132,7 @@ namespace AWSLambdacommunityapp.Service
                     document["Is_Admin"] = false;
                     document["Is_Editable"] = false;
                     document["Condominum_Id"] = userDto.Condominium_ID;
+                    document["Time_Stamp"] = GetCurrentEpochTime();
 
                 var table = Table.LoadTable(_amazonDynamoDBClient, "User");
                 var res = table.PutItemAsync(document);
@@ -292,6 +293,22 @@ namespace AWSLambdacommunityapp.Service
                 return Convert.ToBase64String(hashBytes);
             }
         }
+
+        // Get Current Time
+        public static string GetCurrentEpochTime()
+        {
+            // Get the current date and time in UTC
+            DateTimeOffset now = DateTimeOffset.UtcNow;
+
+            // Calculate the seconds since Unix epoch
+            long epochSeconds = now.ToUnixTimeSeconds();
+
+            // Convert the epoch value to a string
+            string epochTimeString = epochSeconds.ToString();
+
+            return epochTimeString;
+        }
+
 
         // OK Response
         private static APIGatewayHttpApiV2ProxyResponse OkResponse() =>
