@@ -191,21 +191,36 @@ namespace AWSLambdacommunityapp.Service
         {
             try
             {
-                // Define a scan filter to find items where the "Email_Verified" attribute is false
-                var scanFilter = new ScanFilter();
-                scanFilter.AddCondition("Email_Verified", ScanOperator.Equal, false);
+                // Specify the DynamoDB table name
+                Table table = Table.LoadTable(_amazonDynamoDBClient, "User");
 
-                // Perform the scan operation with the filter
-                var userList = await _dynamoDbContext.FromScanAsync<User>(new ScanOperationConfig
-                {
-                    //Filter = scanFilter
-                }).GetRemainingAsync();
+                // Perform the scan operation without a filter
+                Search search = table.Scan(new ScanOperationConfig());
+                List<Document> userList = await search.GetRemainingAsync();
 
                 if (userList != null && userList.Count > 0)
                 {
-                    return new APIGatewayHttpApiV2ProxyResponse()
+                    // Create a new JSON array to store transformed user data
+                    JArray transformedDataArray = new JArray();
+                    
+
+                    foreach (var property in userList)
                     {
-                        Body = System.Text.Json.JsonSerializer.Serialize(userList),
+                        // Create a new JSON object in the desired format
+                        var transformedData = new JObject();
+                        foreach (var item in property)
+                        {
+                            var propertyName = item.Key;
+                            var propertyValue = item.Value.ToString();
+
+                            transformedData[propertyName] = propertyValue;
+                        }
+                        // Add the transformed user data to the array
+                        transformedDataArray.Add(transformedData);
+                    }
+                    return new APIGatewayHttpApiV2ProxyResponse
+                    {
+                        Body = JsonConvert.SerializeObject(transformedDataArray),
                         StatusCode = 200
                     };
                 }
@@ -252,13 +267,14 @@ namespace AWSLambdacommunityapp.Service
                     {
                         { "UserId", new AttributeValue { S = updatedUser.UserId } }
                     },
-                        UpdateExpression = "SET Tower = :Tower, Floor = :Floor, House_Number = :House_Number, Email_Verified = :Email_Verified",
+                        UpdateExpression = "SET Tower = :Tower, Floor = :Floor, House_Number = :House_Number, Email_Verified = :Email_Verified, Is_Condo_Admin = :Is_Condo_Admin",
                         ExpressionAttributeValues = new Dictionary<string, AttributeValue>
                     {
                         { ":Tower", new AttributeValue { S = updatedUser.Tower } },
                         { ":Floor", new AttributeValue { S = updatedUser.Floor } },
                         { ":House_Number", new AttributeValue { S = updatedUser.House_Number } },
-                        { ":Email_Verified", new AttributeValue {  N = "1" } }
+                        { ":Email_Verified", new AttributeValue {  N = updatedUser.Email_Verified?  "1" : "0" } },
+                        { ":Is_Condo_Admin", new AttributeValue {  N = updatedUser.Is_Condo_Admin?  "1" : "0" } },
                     }
                      };
 

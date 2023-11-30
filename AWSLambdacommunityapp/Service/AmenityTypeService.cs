@@ -78,6 +78,20 @@ namespace AWSLambdacommunityapp.Service
                 var filteredList = amenityList.Where(v => v.Condo_ID == Id).ToList();
                 if (filteredList != null && filteredList.Count > 0)
                 {
+                    // Convert Pre-signed URL into 64 Base Image
+                    foreach (var item in filteredList)
+                    {
+                        string im;
+                        try
+                        {
+                            im = await _bucketService.DownloadImageAsBase64Async(item.MultimediaInfomation);
+                        }
+                        catch (Exception ex)
+                        {
+                            im = ex.Message;
+                        }
+                        item.MultimediaInfomation = im;
+                    }
                     return new APIGatewayHttpApiV2ProxyResponse()
                     {
                         Body = JsonSerializer.Serialize(filteredList),

@@ -12,5 +12,7 @@ namespace AWSLambdacommunityapp.Dto
         public string Tower { get; set; }
         public string Floor { get; set; }
         public string House_Number { get; set; }
+        public bool Email_Verified { get; set; }
+        public bool Is_Condo_Admin { get; set; }
     }
 }

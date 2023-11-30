@@ -125,7 +125,7 @@ namespace AWSLambdacommunityapp.Service
                         document["Is_Admin"] = userDto.Is_Admin;
                         document["Is_Condo_Admin"] = userDto.Is_Condo_Admin;
                         document["Phone_Number"] = userDto.Phone_Number;
-                        document["Email_Verified"] = true;
+                        document["Email_Verified"] = userDto.Email_Verified;
                         document["Is_Editable"] = userDto.Is_Editable? true : false;
                         document["Condominum_Id"] = userDto.Condominium_ID;
                         document["Module_ID"] = userDto.Module_ID;

@@ -29,6 +29,7 @@ namespace AWSLambdacommunityapp.Model
         public bool Is_Editable { get; set; }
         public string Time_Stamp { get; set; }
         public string Condominum_Id { get; set; }
+
     }
 
 }
