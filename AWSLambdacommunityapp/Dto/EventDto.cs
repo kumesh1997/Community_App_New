@@ -10,7 +10,10 @@ namespace AWSLambdacommunityapp.Dto
     {
         public string Date { get; set; }
         public string Time { get; set; }
+        public string EventName { get; set; }
+        public string EventDescription { get; set; }
         public string ImageName { get; set; }
         public string Image64Base { get; set; }
+        public string Location { get; set; }
     }
 }

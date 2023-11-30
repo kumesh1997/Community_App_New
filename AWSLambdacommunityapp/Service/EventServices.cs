@@ -84,6 +84,9 @@ namespace AWSLambdacommunityapp.Service
                 newEvent.Id = GenerateId();
                 newEvent.Date = ev.Date;
                 newEvent.Time = ev.Time;
+                newEvent.EventName = ev.EventName;
+                newEvent.EventDescription = ev.EventDescription;
+                newEvent.Location = ev.Location;
                 newEvent.DateTime = GetCurrentEpoch();
                 newEvent.Image = _bucketService.UploadImageAndGetUrl(ev.Image64Base, ev.ImageName);
                 if (newEvent == null)
@@ -123,6 +126,20 @@ namespace AWSLambdacommunityapp.Service
                 var filteredList = event_List.Where(v => v.IsVisible != false).ToList();
                 if (event_List != null && event_List.Count > 0)
                 {
+                    // Convert Pre-signed URL into 64 Base Image
+                    foreach (var item in event_List)
+                    {
+                        string im;
+                        try
+                        {
+                            im = await _bucketService.DownloadImageAsBase64Async(item.Image);
+                        }
+                        catch (Exception ex)
+                        {
+                            im = ex.Message;
+                        }
+                        item.Image = im;
+                    }
                     return new APIGatewayHttpApiV2ProxyResponse()
                     {
                         Body = System.Text.Json.JsonSerializer.Serialize(event_List),

@@ -4,6 +4,7 @@ using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
 using AWSLambdacommunityapp.Model;
 using AWSLambdacommunityapp.Service;
+using AWSLambdacommunityapp.Dto;
 
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
@@ -34,6 +35,14 @@ public class Function
     private readonly SignInService signInService;
     // Reference For Event Service
     private readonly EventServices eventServices;
+    // Reference For Amenity Type Service
+    private readonly AmenityTypeService amenityTypeService;
+    // Reference For CRON Sceduler
+    private readonly CRONScheduler scheduler;
+    // Reference For CRON Service
+    private readonly CRONService CRONService;
+    // Reference For User Profile Service 
+    private readonly UserProfileService userProfileService;
     public Function()
     {
         // New Help Desk Service Instance
@@ -68,6 +77,18 @@ public class Function
 
         // New Event Service Instance
         eventServices = new EventServices();
+
+        // New Amenity Type Service Instance
+        amenityTypeService = new AmenityTypeService();
+
+        // New CRON Sceduler Instance
+        scheduler = new CRONScheduler();
+
+        // New CRON Service Instance
+        CRONService = new CRONService();
+
+        // New User Profile Service Instance
+        userProfileService = new UserProfileService();
     }
 
    public async Task<APIGatewayHttpApiV2ProxyResponse> HelpDeskHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
@@ -125,4 +146,25 @@ public class Function
     {
         return await eventServices.EventFunctionHandler(request, context);
     }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> AmenityTypeHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await amenityTypeService.AmenityTypeFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> CronHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await scheduler.CRONSchedulerFunctionHandler(request,context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> CronServiceHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await CRONService.CRONServiceFunctionHandler(request, context);
+    }
+
+    public async Task<APIGatewayHttpApiV2ProxyResponse> ProfileHandler(APIGatewayHttpApiV2ProxyRequest request, ILambdaContext context)
+    {
+        return await userProfileService.UserProfileFunctionHandler(request, context);
+    }
+
 }

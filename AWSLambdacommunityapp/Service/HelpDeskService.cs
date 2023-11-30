@@ -129,6 +129,7 @@ namespace AWSLambdacommunityapp.Service
             return BadResponse("Helpdesk Request was not Updated !!!!");
         }
 
+        // Gel List of Helpdesk Requests
         public async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetListRequest(APIGatewayHttpApiV2ProxyRequest request)
         {
             // List of Help Desk Requests
@@ -160,6 +161,20 @@ namespace AWSLambdacommunityapp.Service
                 var filteredHelpDesk = helpdesk.Where(v => v.UserId == Id && v.Status.ToLower() != "done").ToList();
                 if (filteredHelpDesk != null)
                 {
+                    // Convert Pre-signed URL into 64 Base Image
+                    foreach (var item in filteredHelpDesk)
+                    {
+                        string im;
+                        try
+                        {
+                            im = await _bucketService.DownloadImageAsBase64Async(item.Image);
+                        }
+                        catch (Exception ex)
+                        {
+                            im = ex.Message;
+                        }
+                        item.Image = im;
+                    }
                     return new APIGatewayHttpApiV2ProxyResponse()
                     {
                         Body = JsonSerializer.Serialize(filteredHelpDesk),
@@ -170,7 +185,19 @@ namespace AWSLambdacommunityapp.Service
             return BadResponse("Help Desk Not Found !!!");
         }
 
+        static async Task<string> GetBase64ImageFromPresignedUrl(string presignedUrl)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                // Download the image from the presigned URL
+                byte[] imageData = await client.GetByteArrayAsync(presignedUrl);
 
+                // Convert the image data to base64
+                string base64Image = Convert.ToBase64String(imageData);
+
+                return base64Image;
+            }
+        }
 
         // OK Response
         private static APIGatewayHttpApiV2ProxyResponse OkResponse() =>

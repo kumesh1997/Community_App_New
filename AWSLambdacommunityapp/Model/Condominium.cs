@@ -12,6 +12,9 @@ namespace AWSLambdacommunityapp.Model
         public string Condominium_Description { get; set; }
         public string Condo_Address { get; set; }
         public string Contact { get; set; }
+        public string NumOfBuildings { get; set; }
+        public string NumOfTowers { get; set; }
+        public string NumOfFloors { get; set; }
         public bool Is_Delete { get; set; } 
     }
 }

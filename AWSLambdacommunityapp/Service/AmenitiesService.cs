@@ -41,10 +41,6 @@ namespace AWSLambdacommunityapp.Service
             
             if (httpMethod == "POST" && request.Body != null && request.PathParameters != null)
             {
-                /*if (requestUri.AbsolutePath == "/amenity/booking")
-                {
-                    return await HandleBookingRequest(request); 
-                }*/
                 return await HandleBookingRequest(request);
             }
             else if (httpMethod == "POST" && request.Body != null && request.PathParameters == null)
@@ -55,6 +51,10 @@ namespace AWSLambdacommunityapp.Service
             {
                return await HandleGetBookingListRequest(request);
             }
+            else if (httpMethod == "GET" && request.Body == null && request.PathParameters != null)
+            {
+                return await HandleGetUserBookingListRequest(request);
+            }
             else if (httpMethod == "PUT" && request.Body != null && request.PathParameters == null)
             {
                 return await HandleUpdateBookingRequest(request);
@@ -63,23 +63,6 @@ namespace AWSLambdacommunityapp.Service
             // Handle unsupported or unrecognized HTTP methods
             return new APIGatewayHttpApiV2ProxyResponse { StatusCode = 400 };
         }
-
-        // Add New Amenities
-        private async Task<APIGatewayHttpApiV2ProxyResponse> HandlePostRequest(
-           APIGatewayHttpApiV2ProxyRequest request)
-        {
-            var amenity = System.Text.Json.JsonSerializer.Deserialize<AmenitiesDto>(request.Body);
-            Amenities newAmenity = new Amenities();
-            // Auto Generate ID
-            newAmenity.Id = GenerateId();
-            newAmenity.AmenityType = amenity.AmenityType;
-            newAmenity.MaximumCapacityCount = amenity.MaximumCapacityCount;
-            newAmenity.AmenityLocation = amenity.AmenityLocation;
-            newAmenity.MultimediaInfomation = _bucketService.UploadImageAndGetUrl(amenity.Image64Base, amenity.ImageName);
-            await _dynamoDbContext.SaveAsync(newAmenity);
-            return OkResponse();
-        }
-
 
         // New Booking for a selected date
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleBookingRequest(
@@ -93,7 +76,11 @@ namespace AWSLambdacommunityapp.Service
                 amenityBooking.Id = GenerateId();
                 amenityBooking.AmenityTypeId = amenityBookingDto.AmenityTypeId;
                 amenityBooking.Time = GetCurrentEpoch();
-                amenityBooking.Requested_Time = amenityBookingDto.FromTime;
+                amenityBooking.Tower = amenityBookingDto.Tower;
+                amenityBooking.Floor = amenityBookingDto.Floor;
+                amenityBooking.House_Number = amenityBookingDto.House_Number;
+                amenityBooking.Requested_Time_From = amenityBookingDto.FromTime;
+                amenityBooking.Booking_Date = amenityBookingDto.Booking_Date;
                 amenityBooking.BookingCount = amenityBookingDto.NumberofBookingByTheUser;
                 amenityBooking.UserId = amenityBookingDto.AttendeeId;
                 amenityBooking.Booking_Status = "opened";
@@ -121,7 +108,7 @@ namespace AWSLambdacommunityapp.Service
             };
         }
 
-        // Get A List of Booking
+        // Get A List of Booking for Admin Purpose
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetBookingListRequest(
            APIGatewayHttpApiV2ProxyRequest request)
         {
@@ -129,12 +116,12 @@ namespace AWSLambdacommunityapp.Service
             {
                 var booking_List = await _dynamoDbContext.ScanAsync<AmenityBooking>(default).GetRemainingAsync();
                 // Filter Booking Where Status is not Accepted
-                var filteredList = booking_List.Where(v => v.Booking_Status.ToLower() != "accepted" || v.Booking_Status.ToLower() != "rejected").ToList();
-                if (filteredList != null && filteredList.Count > 0)
+                //var filteredList = booking_List.Where(v => v.Booking_Status.ToLower() != "accepted" || v.Booking_Status.ToLower() != "rejected").ToList();
+                if (booking_List != null && booking_List.Count > 0)
                 {
                     return new APIGatewayHttpApiV2ProxyResponse()
                     {
-                        Body = System.Text.Json.JsonSerializer.Serialize(filteredList),
+                        Body = System.Text.Json.JsonSerializer.Serialize(booking_List),
                         StatusCode = 200
                     };
                 }
@@ -155,6 +142,31 @@ namespace AWSLambdacommunityapp.Service
             };
         }
 
+        // Get Booking List of a User
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetUserBookingListRequest(
+          APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                // get the parameter value
+                request.PathParameters.TryGetValue("Id", out var Id);
+                var booking_List = await _dynamoDbContext.ScanAsync<AmenityBooking>(default).GetRemainingAsync();
+                var filteredList = booking_List.Where(v => v.UserId == Id && ( v.Booking_Status.ToLower() == "accepted" || v.Booking_Status.ToLower() == "rejected" || v.Booking_Status.ToLower() == "opened")).ToList();
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = System.Text.Json.JsonSerializer.Serialize(booking_List),
+                    StatusCode = 200
+                };
+            }
+            catch (Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = ex.Message,
+                    StatusCode = 503
+                };
+            }
+        }
         // Update Booking
         private async Task<APIGatewayHttpApiV2ProxyResponse> HandleUpdateBookingRequest(
        APIGatewayHttpApiV2ProxyRequest request)
@@ -204,8 +216,34 @@ namespace AWSLambdacommunityapp.Service
             };
         }
 
-        // Get Current Epoch
-        public static int GetCurrentEpoch()
+        // Get Amenity List
+        private async Task<APIGatewayHttpApiV2ProxyResponse> HandleGetAmenityListRequest(
+      APIGatewayHttpApiV2ProxyRequest request)
+        {
+            try
+            {
+                // get the parameter value
+                request.PathParameters.TryGetValue("Id", out var Id);
+                // Get Amenity List of Particular Condo
+                //var Amenity_List = await _dynamoDbContext.LoadAsync<Amenities>(Id);
+                var visitor = await _dynamoDbContext.ScanAsync<Amenities>(default).GetRemainingAsync();
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = System.Text.Json.JsonSerializer.Serialize(visitor),
+                    StatusCode = 200
+                };
+            }
+            catch(Exception ex)
+            {
+                return new APIGatewayHttpApiV2ProxyResponse()
+                {
+                    Body = ex.Message,
+                    StatusCode = 503
+                };
+            }
+        }
+            // Get Current Epoch
+            public static int GetCurrentEpoch()
         {
             DateTimeOffset epochStart = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
             TimeSpan currentTime = DateTimeOffset.UtcNow - epochStart;

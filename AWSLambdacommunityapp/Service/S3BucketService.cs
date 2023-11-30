@@ -20,6 +20,7 @@ namespace AWSLambdacommunityapp.Service
             _bucketName = "sltappbucket";
         }
 
+        // Upload Image
         public string UploadImageAndGetUrl(string image64Base, string fileName)
         {
             // Decode the base64 image string to bytes
@@ -53,12 +54,58 @@ namespace AWSLambdacommunityapp.Service
                     {
                         BucketName = _bucketName,
                         Key = fileName,
-                        Expires = DateTime.Now.AddYears(5) // The link will expire in 24 hours, you can adjust the expiration time as needed.
+                        Expires = DateTime.UtcNow.AddYears(5)
+                        // The link will expire in 24 hours, you can adjust the expiration time as needed.
                     });
                 }
             }
             // Handle the case when image upload fails.
             return null;
+        }
+
+        // Download Image
+        public async Task<string> DownloadImageAsBase64Async(string preSignedUrl)
+        {
+            using (var client = new AmazonS3Client())
+            {
+                var getObjectRequest = new GetObjectRequest
+                {
+                    BucketName = _bucketName,
+                    Key = ExtractKeyFromPresignedUrl(preSignedUrl), // You need to extract the key from the pre-signed URL
+                                                                    // ... Other parameters from the pre-signed URL if required
+                };
+
+                using (var response = await client.GetObjectAsync(getObjectRequest))
+                {
+                    using (var responseStream = response.ResponseStream)
+                    {
+                        using (var memoryStream = new MemoryStream())
+                        {
+                            await responseStream.CopyToAsync(memoryStream);
+
+                            // Convert the byte array to a base64 string
+                            string base64Image = Convert.ToBase64String(memoryStream.ToArray());
+
+                            return base64Image;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Extract Key
+        public static string ExtractKeyFromPresignedUrl(string preSignedUrl)
+        {
+            //Sample pre-signed URL format: https://your-bucket-name.s3.amazonaws.com/your-object-key?AWSAccessKeyId=ACCESS_KEY_ID&Expires=EXPIRATION_TIMESTAMP&Signature=SIGNATURE
+            Uri uri = new Uri(preSignedUrl);
+
+            // Extract the path (object key) from the URL
+            string path = uri.AbsolutePath;
+
+            // Remove the leading slash from the path
+            string key = path.TrimStart('/');
+
+            return key;
         }
     }
 }

@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>AWSLambdacommunityapp</id>
+    <version>1.0.0</version>
+    <authors>AWSLambdacommunityapp</authors>
+    <description>Package Description</description>
+    <dependencies>
+      <group targetFramework="net6.0">
+        <dependency id="AWSSDK.CognitoIdentityProvider" version="3.7.203.7" exclude="Build,Analyzers" />
+        <dependency id="AWSSDK.DynamoDBv2" version="3.7.201.7" exclude="Build,Analyzers" />
+        <dependency id="AWSSDK.IotData" version="3.7.200.51" exclude="Build,Analyzers" />
+        <dependency id="AWSSDK.S3" version="3.7.203.11" exclude="Build,Analyzers" />
+        <dependency id="Amazon.Extensions.CognitoAuthentication" version="2.5.2" exclude="Build,Analyzers" />
+        <dependency id="Amazon.Lambda.APIGatewayEvents" version="2.6.0" exclude="Build,Analyzers" />
+        <dependency id="Amazon.Lambda.Core" version="2.1.0" exclude="Build,Analyzers" />
+        <dependency id="Amazon.Lambda.Serialization.SystemTextJson" version="2.3.1" exclude="Build,Analyzers" />
+        <dependency id="MQTTnet" version="4.3.1.873" exclude="Build,Analyzers" />
+        <dependency id="MQTTnet.Extensions.ManagedClient" version="4.3.1.873" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.DependencyInjection" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Logging" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="Microsoft.Extensions.Logging.Console" version="7.0.0" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="13.0.3" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Debug\net6.0\AWSLambdacommunityapp.runtimeconfig.json" target="lib\net6.0\AWSLambdacommunityapp.runtimeconfig.json" />
+    <file src="C:\Users\Tharindu  Kumesh\source\repos\AWSLambdacommunityapp\AWSLambdacommunityapp\bin\Debug\net6.0\AWSLambdacommunityapp.dll" target="lib\net6.0\AWSLambdacommunityapp.dll" />
+  </files>
+</package>
