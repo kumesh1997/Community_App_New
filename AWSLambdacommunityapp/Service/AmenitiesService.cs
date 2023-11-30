@@ -154,7 +154,7 @@ namespace AWSLambdacommunityapp.Service
                 var filteredList = booking_List.Where(v => v.UserId == Id && ( v.Booking_Status.ToLower() == "accepted" || v.Booking_Status.ToLower() == "rejected" || v.Booking_Status.ToLower() == "opened")).ToList();
                 return new APIGatewayHttpApiV2ProxyResponse()
                 {
-                    Body = System.Text.Json.JsonSerializer.Serialize(booking_List),
+                    Body = System.Text.Json.JsonSerializer.Serialize(filteredList),
                     StatusCode = 200
                 };
             }
